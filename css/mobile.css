@@ -6,7 +6,7 @@ html,body{position:fixed;inset:0;bottom:auto;width:100%;height:calc(100% + var(-
   -webkit-text-size-adjust:100%;text-size-adjust:100%;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none}
 canvas#c{touch-action:none}
 .modal{touch-action:pan-y}
-.box{overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y}
+.box,.scroll{overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y}
 button,.card,.wcard,.rune,.sock,.opt{touch-action:manipulation}
 img{-webkit-user-drag:none;pointer-events:none}
 
@@ -58,14 +58,23 @@ body.touch .sk.locked{display:none}
   .card{width:170px;padding:12px 10px}
   .card .ic{font-size:32px}.card b{font-size:16px}.card p{font-size:12.5px}
   .wardrobe{grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:14px}
-  #slotsUI{grid-template-columns:repeat(auto-fill,minmax(min(300px,100%),1fr));max-height:none}
-  .inv{max-height:none}
+  #slotsUI{grid-template-columns:repeat(auto-fill,minmax(min(300px,100%),1fr))}
+  /* мастерская на весь экран: слоты сверху прокручиваются, руны прибиты снизу — тянуться к ним не нужно */
+  .craftBox{height:100%}
+  .craftSub{font-size:12.5px;margin-bottom:8px}
+  .cols{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) auto;gap:12px}
+  .runePane{overflow:visible;padding:8px 2px 0;border-top:2px solid #2e2358}
+  .inv{max-height:min(27vh,172px)}
+  #tip{margin-top:10px;padding:9px 11px;font-size:13.5px;min-height:0}
   .foot{margin-top:12px}
   .slot.locked{padding:6px 12px}.slot.locked .hd{margin:0}
 }
 /* телефон боком: мастерская остаётся в две колонки, окно прокручивается целиком */
 @media (max-height:560px) and (orientation:landscape){
-  .cols{grid-template-columns:1.5fr 1fr;gap:14px}
+  .cols{grid-template-columns:1.5fr 1fr;grid-template-rows:minmax(0,1fr);gap:14px}
+  .craftSub{display:none}
+  .runePane{overflow:auto;border-top:0;padding:4px}
+  .inv{max-height:none}
   /* «Как играть»: подсказки в две колонки, чтобы кнопка влезла без прокрутки */
   #helpM .box{max-width:760px!important}
   .keys{grid-template-columns:auto 1fr auto 1fr;max-width:none}

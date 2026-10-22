@@ -59,9 +59,9 @@ function resetTouch(){
 
 // защита страницы от жестов браузера: на iPhone CSS touch-action помогает не везде,
 // поэтому глушим отскок, щипок, двойной тап и меню долгого нажатия ещё и здесь.
-// Прокрутку пропускаем только внутри окна, если ему действительно есть куда прокручиваться.
+// Прокрутку пропускаем только внутри окна или его прокручиваемой части (.scroll), если ей действительно есть куда.
 document.addEventListener('touchmove', e => {
-  const box = e.target.closest && e.target.closest('.box');
+  const box = e.target.closest && e.target.closest('.scroll, .box');
   if (e.cancelable && (!box || box.scrollHeight <= box.clientHeight)) e.preventDefault();
 }, { passive: false });
 for (const ev of ['gesturestart', 'gesturechange', 'dblclick', 'contextmenu', 'selectstart'])

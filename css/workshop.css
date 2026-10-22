@@ -1,7 +1,21 @@
-/* мастерская */
-.cols{display:grid;grid-template-columns:1.7fr 1fr;gap:22px}
-#slotsUI{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px;max-height:62vh;overflow:auto;padding:6px}
-@media (max-width:860px){.cols{grid-template-columns:1fr}#slotsUI{max-height:none}}
+/* мастерская: шапка с кнопкой «В бой», ниже слоты и руны — каждая часть прокручивается сама, окно целиком нет */
+.craftBox{display:flex;flex-direction:column;overflow:hidden}
+.craftHead{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:6px}
+.craftHead h2{margin:0}
+#craftClose{flex:none}
+.cols{flex:1;min-height:0;display:grid;grid-template-columns:1.7fr 1fr;gap:22px}
+#slotsUI{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px;align-content:start;min-height:0;overflow:auto;padding:6px}
+.runePane{display:flex;flex-direction:column;min-height:0;overflow:auto;padding:4px}
+.invHead{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.invHead>b{font-size:16px;color:var(--gold2)}
+.invTabs{display:flex;gap:6px;flex-wrap:wrap}
+.itab{font-family:var(--pix);font-weight:700;font-size:13px;color:var(--dim);background:#1a1234;border:0;padding:6px 8px 5px;cursor:pointer;
+  box-shadow:0 0 0 2px var(--ink),inset 0 0 0 2px #2e2358;touch-action:manipulation}
+.itab b{color:var(--tc)}
+.itab.on{color:var(--txt);background:#2c2150;box-shadow:0 0 0 2px var(--ink),inset 0 0 0 2px var(--tc)}
+.invEmpty{color:var(--dim);font-size:14px;line-height:1.4}
+.tipHint{color:var(--gold2);font-size:13px;margin-top:6px}
+#tip .pbtn{display:block;margin-top:10px;font-size:10px;padding:10px 14px 8px}
 .slot{padding:10px 12px;background:rgba(0,0,0,.22);box-shadow:0 0 0 2px var(--ink),inset 0 0 0 2px #2e2358}
 .slot.locked{opacity:.45}
 .slot .hd{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:9px}
@@ -15,11 +29,12 @@
 .sock.t-form.filled{box-shadow:0 0 0 2px var(--ink),inset 0 0 0 2px var(--form)} .sock.t-el.filled{box-shadow:0 0 0 2px var(--ink),inset 0 0 0 2px var(--el)} .sock.t-mod.filled{box-shadow:0 0 0 2px var(--ink),inset 0 0 0 2px var(--mod)}
 .sock.ok{box-shadow:0 0 0 2px var(--ink),inset 0 0 0 2px var(--gold),0 0 14px 2px rgba(255,210,90,.45)!important;animation:pulse .9s infinite}
 @keyframes pulse{50%{transform:scale(1.07)}}
+.sock.sel{box-shadow:0 0 0 2px var(--ink),inset 0 0 0 3px #ffffff,0 0 16px 3px rgba(255,255,255,.4)!important;transform:scale(1.06)}
 .sock.bad{animation:shake .3s}
 @keyframes shake{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
 .sock:hover{filter:brightness(1.3)}
 .vsep{width:2px;background:#2b2150;margin:0 3px}
-.inv{display:flex;flex-wrap:wrap;gap:9px;align-content:flex-start;min-height:60px;max-height:34vh;overflow:auto;padding:5px}
+.inv{display:flex;flex-wrap:wrap;gap:9px;align-content:flex-start;min-height:60px;max-height:34vh;overflow:auto;padding:5px;flex:none}
 .rune{width:46px;height:46px;display:flex;align-items:center;justify-content:center;font-size:22px;cursor:pointer;background:radial-gradient(circle at 50% 35%,#3a2b6e,#160f2c 85%);
   box-shadow:0 0 0 2px var(--ink),inset 0 0 0 2px var(--tc),0 4px 0 2px rgba(0,0,0,.35);transition:transform .1s}
 .rune:hover{transform:translateY(-3px)}

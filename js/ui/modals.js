@@ -1,7 +1,17 @@
 // ---------- модалки ----------
-function showModal(id){ document.querySelectorAll('.modal').forEach(m => m.classList.toggle('show', m.id === id)); for (const k in keys) keys[k] = false; resetTouch(); }
+// «Сквозное» нажатие: кнопка 🔮 или событие игры открывают окно, пока палец ещё на экране, — и когда его отпускают,
+// телефон засчитывает клик по кнопке, оказавшейся под пальцем. Клик, начатый до открытия окна, глушим.
+let modalT = 0, downT = 0;
+addEventListener('pointerdown', () => { downT = performance.now(); }, true);
+addEventListener('click', e => { if (e.isTrusted && e.detail > 0 && downT < modalT){ e.stopPropagation(); e.preventDefault(); } }, true); // detail 0 — Enter с клавиатуры
+function showModal(id){
+  modalT = performance.now();
+  document.querySelectorAll('.modal').forEach(m => m.classList.toggle('show', m.id === id));
+  for (const k in keys) keys[k] = false;
+  resetTouch();
+}
 function closeModal(){ showModal(null); setState('play'); if (pendingLevels > 0) openPick('level'); }
-function openCraft(){ setState('craft'); selRune = -1; sortInv(); renderCraft(); showModal('craftM'); sfx.click(); }
+function openCraft(){ setState('craft'); resetCraftSel(); sortInv(); renderCraft(); showModal('craftM'); sfx.click(); }
 function openPause(){
   setState('pause');
   $('pauseInfo').innerHTML = `${BIOMES[RUN.biome].icon} ${BIOMES[RUN.biome].name}<br>${RUN.pact ? PACTS[RUN.pact].icon + ' Пакт: ' + PACTS[RUN.pact].name : ''}` +
@@ -59,64 +69,118 @@ function renderPetList(){
 }
 
 // мастерская
-let selRune = -1;
+// Два пути: нажать руну → подсветятся подходящие ячейки; или нажать ячейку → в списке останутся только руны её типа,
+// нажатие на руну сразу вставит её. Занятую ячейку руна заменяет, а снять руну можно кнопкой в подсказке.
+let selRune = -1, selSock = null, invFilter = 'all';
+const sockGet = ({ s, k, i }) => k === 'form' ? slots[s].form : k === 'el' ? slots[s].element : slots[s].mods[i];
+const sockSet = ({ s, k, i }, v) => { if (k === 'form') slots[s].form = v; else if (k === 'el') slots[s].element = v; else slots[s].mods[i] = v; };
+const sameSock = (a, b) => a && b && a.s === b.s && a.k === b.k && a.i === b.i;
 function sortInv(){ inventory.sort((a, b) => TYPE_ORDER[RUNES[a].type] - TYPE_ORDER[RUNES[b].type] || RUNES[a].name.localeCompare(RUNES[b].name)); }
 function socketHTML(si, kind, idx, rune){
   const R = rune && RUNES[rune], label = kind === 'form' ? 'форма' : kind === 'el' ? 'стихия' : 'мод';
-  return `<div class="sock t-${kind}${R ? ' filled' : ''}" data-s="${si}" data-k="${kind}" data-i="${idx}" data-r="${rune || ''}">${R ? R.icon : ''}<small>${label}</small></div>`;
+  const sel = sameSock(selSock, { s: si, k: kind, i: idx }) ? ' sel' : '';
+  return `<div class="sock t-${kind}${R ? ' filled' : ''}${sel}" data-s="${si}" data-k="${kind}" data-i="${idx}" data-r="${rune || ''}">${R ? R.icon : ''}<small>${label}</small></div>`;
 }
+function resetCraftSel(){ selRune = -1; selSock = null; invFilter = 'all'; }
 function renderCraft(){
   const un = unlocked();
-  $('slotsUI').innerHTML = slots.map((s, i) => {
-    if (i >= un) return `<div class="slot locked"><div class="hd"><b>Слот ${i + 1}</b><small>🔒 откроется на ${SLOT_UNLOCK[i]} уровне</small></div></div>`;
+  // закрытые слоты не занимают место: виден только ближайший
+  $('slotsUI').innerHTML = slots.slice(0, Math.min(un + 1, NSLOTS)).map((s, i) => {
+    if (i >= un){
+      const rest = NSLOTS - un - 1;
+      return `<div class="slot locked"><div class="hd"><b>Слот ${i + 1}</b><small>🔒 на ${SLOT_UNLOCK[i]} уровне${rest > 0 ? ` · ещё ${rest} позже` : ''}</small></div></div>`;
+    }
     const c = compiled[i];
     const stats = c ? `${c.dmg ? 'урон ' + c.dmg.toFixed(0) : 'поддержка'} · раз в ${(c.cd / 60).toFixed(2)} с<br>всего ${Math.round(slotDmg[i])}` : 'вставь форму';
     return `<div class="slot"><div class="hd"><b>${i + 1}. ${skillName(s)}</b><small>${stats}</small></div><div class="sockets">` +
       socketHTML(i, 'form', 0, s.form) + socketHTML(i, 'el', 0, s.element) + '<span class="vsep"></span>' +
       s.mods.map((m, j) => socketHTML(i, 'mod', j, m)).join('') + '</div></div>';
   }).join('');
-  $('invUI').innerHTML = inventory.length ? inventory.map((r, i) =>
+  const count = t => inventory.filter(r => t === 'all' || RUNES[r].type === t).length;
+  $('invTabs').innerHTML = [['all', 'Все'], ['form', 'Формы'], ['el', 'Стихии'], ['mod', 'Моды']].map(([t, n]) =>
+    `<button class="itab${invFilter === t ? ' on' : ''}" data-f="${t}" style="--tc:${t === 'all' ? 'var(--gold)' : TYPE_COLOR[t]}">${n} <b>${count(t)}</b></button>`).join('');
+  const shown = inventory.map((r, i) => [r, i]).filter(([r]) => invFilter === 'all' || RUNES[r].type === invFilter);
+  $('invUI').innerHTML = shown.length ? shown.map(([r, i]) =>
     `<div class="rune${i === selRune ? ' sel' : ''}" style="--tc:${TYPE_COLOR[RUNES[r].type]}" data-ri="${i}">${RUNES[r].icon}</div>`).join('')
-    : '<div style="color:var(--dim);font-size:14px">Пусто. Руны дают за уровни, алтари, кристаллы, элиту и боссов.</div>';
+    : `<div class="invEmpty">${inventory.length ? `Нет рун этого типа (${TYPE_NAME[invFilter] || ''}).` : 'Пусто.'} Руны дают за уровни, алтари, кристаллы, элиту и боссов.</div>`;
   if (selRune >= 0){
     const t = RUNES[inventory[selRune]].type;
     document.querySelectorAll(`.sock.t-${t}`).forEach(el => el.classList.add('ok'));
   }
-  document.querySelectorAll('.rune').forEach(el => {
-    const r = inventory[+el.dataset.ri];
+  document.querySelectorAll('#invTabs .itab').forEach(el => el.onclick = () => { invFilter = el.dataset.f; selSock = null; sfx.click(); renderCraft(); });
+  document.querySelectorAll('#invUI .rune').forEach(el => {
+    const ri = +el.dataset.ri, r = inventory[ri];
     el.onmouseenter = () => tip(r);
-    el.onclick = () => { selRune = selRune === +el.dataset.ri ? -1 : +el.dataset.ri; sfx.click(); renderCraft(); tip(r); };
+    el.onclick = () => clickRune(ri);
   });
   document.querySelectorAll('.sock').forEach(el => {
     el.onmouseenter = () => { if (el.dataset.r) tip(el.dataset.r); };
-    el.onclick = () => clickSocket(+el.dataset.s, el.dataset.k, +el.dataset.i, el);
+    el.onclick = () => clickSocket({ s: +el.dataset.s, k: el.dataset.k, i: +el.dataset.i }, el);
   });
+  renderTip();
+}
+// подсказка показывает то, что сейчас выбрано
+function renderTip(){
+  if (selSock){
+    const cur = sockGet(selSock), kind = TYPE_NAME[selSock.k];
+    $('tip').innerHTML = `<b>Слот ${selSock.s + 1} · ячейка «${kind}»</b>` +
+      (cur ? `${RUNES[cur].icon} ${RUNES[cur].name} — ${RUNES[cur].desc}<br>` : '') +
+      (inventory.some(r => RUNES[r].type === selSock.k) ? (cur ? 'Нажми руну выше, чтобы заменить.' : 'Нажми руну выше, чтобы вставить.') : `Нет свободных рун этого типа.`) +
+      (cur ? `<button class="pbtn alt" id="sockTake">↩ СНЯТЬ РУНУ</button>` : '');
+    if ($('sockTake')) $('sockTake').onclick = () => {
+      inventory.push(sockGet(selSock)); sockSet(selSock, null);
+      afterChange(selSock.s);
+    };
+  } else if (selRune >= 0){
+    tip(inventory[selRune]);
+    $('tip').innerHTML += '<div class="tipHint">Теперь нажми подсвеченную ячейку.</div>';
+  } else $('tip').innerHTML = `<span class="tc">Нажми на ячейку навыка или на руну, чтобы узнать, что она делает.</span><span class="kb">Наведи на руну или ячейку, чтобы узнать, что она делает.</span>`;
 }
 function tip(r){
   const R = RUNES[r];
   $('tip').innerHTML = `<b>${R.icon} ${R.name} <span style="color:${TYPE_COLOR[R.type]};font-weight:500;font-size:12px">· ${TYPE_NAME[R.type]}</span></b>${R.desc}`;
 }
-function clickSocket(si, kind, idx, el){
-  const s = slots[si];
-  const get = () => kind === 'form' ? s.form : kind === 'el' ? s.element : s.mods[idx];
-  const set = v => { if (kind === 'form') s.form = v; else if (kind === 'el') s.element = v; else s.mods[idx] = v; };
-  const cur = get();
-  if (selRune >= 0){
-    const r = inventory[selRune];
-    if (RUNES[r].type !== kind){
-      el.classList.remove('bad'); void el.offsetWidth; el.classList.add('bad');
-      $('tip').innerHTML = `<b>Не туда 🙃</b>${RUNES[r].name} — это ${TYPE_NAME[RUNES[r].type]}, ставь её в ячейку «${TYPE_NAME[RUNES[r].type]}».`;
-      return;
-    }
-    inventory.splice(selRune, 1);
-    if (cur) inventory.push(cur);
-    set(r); selRune = -1;
-  } else if (cur){
-    inventory.push(cur); set(null);
-  } else return;
+function afterChange(si){
   sfx.rune();
   recompile(); cds[si] = Math.min(cds[si], 15);
   sortInv(); renderCraft();
+}
+function badTip(el, r, kind){
+  el.classList.remove('bad'); void el.offsetWidth; el.classList.add('bad');
+  $('tip').innerHTML = `<b>Не туда 🙃</b>${RUNES[r].name} — это ${TYPE_NAME[RUNES[r].type]}, а ячейка — «${TYPE_NAME[kind]}».`;
+}
+function placeRune(sock, ri){
+  const r = inventory[ri], cur = sockGet(sock);
+  inventory.splice(ri, 1);
+  if (cur) inventory.push(cur);
+  sockSet(sock, r);
+}
+function clickRune(ri){
+  const r = inventory[ri];
+  if (selSock){
+    if (RUNES[r].type !== selSock.k) return;
+    placeRune(selSock, ri);
+    const si = selSock.s;
+    // модификаторов в слоте три: после вставки сразу переходим к следующему пустому
+    const next = selSock.k === 'mod' && slots[si].mods.findIndex(m => !m);
+    selSock = next >= 0 && inventory.some(x => RUNES[x].type === 'mod') ? { s: si, k: 'mod', i: next } : null;
+    if (!selSock) invFilter = 'all';
+    selRune = -1;
+    afterChange(si);
+    return;
+  }
+  selRune = selRune === ri ? -1 : ri; sfx.click(); renderCraft();
+}
+function clickSocket(sock, el){
+  if (selRune >= 0){
+    const r = inventory[selRune];
+    if (RUNES[r].type !== sock.k) return badTip(el, r, sock.k);
+    placeRune(sock, selRune); selRune = -1;
+    return afterChange(sock.s);
+  }
+  if (sameSock(selSock, sock)){ selSock = null; invFilter = 'all'; }
+  else { selSock = sock; invFilter = sock.k; }
+  sfx.click(); renderCraft();
 }
 
 // выбор руны: уровень или алтарь

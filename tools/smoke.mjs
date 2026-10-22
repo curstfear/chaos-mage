@@ -259,6 +259,16 @@ for (const prof of PROFILES){
     if (touch) await press('#tCraft'); else { await page.keyboard.press('Tab'); await sleep(150); }
     if (await g('state') !== 'craft') throw new Error('state = ' + await g('state'));
     await shot('5-craft');
+    // ячейка → в списке только руны её типа → нажатие на руну вставляет её
+    await g("inventory.push('echo', 'split', 'fire'); sortInv(); resetCraftSel(); renderCraft()");
+    const sock = await g("(el => el && [el.dataset.s, el.dataset.i])(document.querySelector('.sock.t-mod:not(.filled)'))");
+    await press(`.sock[data-k=mod][data-s="${sock[0]}"][data-i="${sock[1]}"]`);
+    if (await g('invFilter') !== 'mod') throw new Error('фильтр не включился: ' + await g('invFilter'));
+    if (await g("[...document.querySelectorAll('#invUI .rune')].some(el => RUNES[inventory[+el.dataset.ri]].type !== 'mod')")) throw new Error('в списке не только моды');
+    await shot('5-craft-sock');
+    await press('#invUI .rune');
+    if (!(await g(`slots[${sock[0]}].mods[${sock[1]}]`))) throw new Error('руна не вставилась в выбранную ячейку');
+    await shot('5-craft-placed');
     await press('#craftClose');
     if (await g('state') !== 'play') throw new Error('не закрылась');
   });
