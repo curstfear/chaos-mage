@@ -150,7 +150,7 @@ function rollRunes(){
   for (const k of FORMS) pool.push(k);
   for (const k of ELS) pool.push(k, k);
   for (const k of MODS) pool.push(k, k);
-  pool.push('trigger', 'trigger');
+  pool.push('trigger', 'trigger', 'trigger'); // «Цепь» — основа комбо, предлагается чаще остальных
   while (out.length < 3 + PACT.choice){ const r = pick(pool); if (!out.includes(r)) out.push(r); }
   return out;
 }

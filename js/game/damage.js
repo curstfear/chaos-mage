@@ -1,4 +1,16 @@
 // ---------- урон ----------
+// руна на земле. «Цепь» — главная руна для комбо, поэтому её видно издалека: столб света, звон и баннер
+function dropRune(x, y, r){
+  const g = { x, y, kind: 'rune', r };
+  if (r === 'trigger'){
+    g.chain = true;
+    banner('🔗 ВЫПАЛА ЦЕПЬ!', '#7fe8ff');
+    sfx.chain(); ring(x, y, 90, '#7fe8ff'); ring(x, y, 150, '#ffe08a');
+  }
+  gems.push(g);
+}
+// случайная руна с чуть повышенным шансом «Цепи» (~5% вместо ~2.5%)
+const randomRune = list => Math.random() < 0.025 ? 'trigger' : pick(list);
 function damage(e, amt, color, slot, crit){
   if (e.dead) return;
   e.hp -= amt; e.flash = 5;
@@ -126,12 +138,12 @@ function kill(e){
   else gainXp(xpv);
   if (!e.static && Math.random() < 0.012) gems.push({ x: e.x + 10, y: e.y, kind: 'heart' });
   let runeCh = e.static ? 0.06 : e.elite ? 0.15 : 0.001;
-  runeCh *= PACT.rune * (hasPet('toad') ? 1.5 : 1);
+  runeCh *= PACT.rune * (hasPet('toad') ? 1.5 : 1) * runeLate();
   if (src && src.el === 'gold') runeCh += 0.01;
   const nr = e.type === 'goblin' ? 2 : e.boss ? 1 : Math.random() < runeCh ? 1 : 0;
   for (let k = 0; k < nr; k++){
-    const r = e.boss ? pick([...FORMS, 'trigger', 'echo', 'split', 'detonate']) : pick([...ELS, ...MODS]);
-    gems.push({ x: e.x + rnd(-15, 15), y: e.y + rnd(-15, 15), kind: 'rune', r });
+    const r = e.boss ? pick([...FORMS, 'trigger', 'echo', 'split', 'detonate']) : randomRune([...ELS, ...MODS]);
+    dropRune(e.x + rnd(-15, 15), e.y + rnd(-15, 15), r);
   }
   if (e.type === 'brute') for (let k = 0; k < 3; k++) spawnEnemy('slime', e.x + rnd(-15, 15), e.y + rnd(-15, 15));
   if (e.type === 'slimeking') for (let k = 0; k < 6; k++) spawnEnemy('slime', e.x + rnd(-40, 40), e.y + rnd(-40, 40), k < 2, true);
@@ -164,7 +176,7 @@ function chaosBurst(){
   comboRuneCd = 60 * 45;
   banner(`🔥 КОМБО ×${combo}! Держи руну!`, '#ffe08a');
   sfx.rune();
-  gems.push({ x: P.x + rnd(-70, 70), y: P.y + rnd(-70, 70), kind: 'rune', r: pick([...FORMS, ...ELS, ...MODS]) });
+  dropRune(P.x + rnd(-70, 70), P.y + rnd(-70, 70), randomRune([...FORMS, ...ELS, ...MODS]));
   ring(P.x, P.y, 160, '#7fe8ff'); ring(P.x, P.y, 240, '#ffe08a');
 }
 function weatherTick(){

@@ -37,10 +37,10 @@ function applyMeta(P){
 function runReward(){
   const sec = tick / 60;
   const parts = [
-    ['⏱ за время', sec / 5],
-    ['💀 за убийства', kills / 6],
-    ['⭐ за уровень', (level - 1) * 5],
-    ['👑 за боссов', bossCount * 30]
+    ['⏱ за время', sec / 7],
+    ['💀 за убийства', kills / 8],
+    ['⭐ за уровень', (level - 1) * 4],
+    ['👑 за боссов', bossCount * 25]
   ].map(([k, v]) => [k, Math.floor(v)]);
   const base = parts.reduce((s, [, v]) => s + v, 0);
   return { parts, total: Math.round(base * PACT.shards), bonus: PACT.shards > 1 ? Math.round(base * (PACT.shards - 1)) : 0 };

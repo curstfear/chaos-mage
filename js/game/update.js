@@ -8,7 +8,7 @@ function update(){
   const [mx, my] = moveDir();
   if (P.dash > 0){ P.dash--; if (tick % 2 === 0) particles.push({ x: P.x, y: P.y, vx: 0, vy: 0, life: 16, max: 16, color: '#ffd25a', r: 10 }); }
   else {
-    const k = P.onIce ? 0.035 : 0.25, sp = 3.4 * PACT.speed;
+    const k = P.onIce ? 0.035 : 0.25, sp = 3.3 * PACT.speed;
     P.vx += (mx * sp - P.vx) * k; P.vy += (my * sp - P.vy) * k;
   }
   P.x += P.vx; P.y += P.vy;
@@ -324,12 +324,18 @@ function update(){
 
   // кристаллы опыта и подарки
   for (const g of gems){
+    if (g.chain && tick % 3 === 0) particles.push({ x: g.x + rnd(-14, 14), y: g.y + rnd(-6, 6), vx: rnd(-0.3, 0.3), vy: -rnd(1, 2.2), life: 40, max: 40, color: pick(['#7fe8ff', '#ffe08a', '#ffffff']), r: rnd(1.5, 3) });
     const dx = P.x - g.x, dy = P.y - g.y, d = Math.hypot(dx, dy) || 1;
     if (d < (hasPet('toad') ? 300 : 140) * PACT.magnet || g.pull){ g.pull = true; g.ps = (g.ps || 0) + 0.4; const s = Math.min(14, 3 + g.ps); g.x += dx / d * s; g.y += dy / d * s; }
     if (d < P.r + 10){
       g.taken = true;
       if (g.kind === 'heart'){ const h = Math.round(20 * PACT.heal); P.hp = Math.min(P.maxHp, P.hp + h); banner(`+${h} ❤️`, '#ff5a7a'); sfx.rune(); }
       else if (g.kind === 'feather'){ hasFeather = true; banner('🪶 Перо феникса! Если погибнешь — возродишься', '#ff8a3d'); sfx.rune(); }
+      else if (g.kind === 'rune' && g.chain){
+        inventory.push(g.r); sfx.chain(); flash = Math.max(flash, 0.5);
+        burst(g.x, g.y, 40, '#7fe8ff', 7); ring(P.x, P.y, 120, '#7fe8ff'); ring(P.x, P.y, 200, '#ffe08a');
+        banner(`🔗 ЦЕПЬ ТВОЯ! ${KEY('craft')} — вставь её в навык`, '#7fe8ff');
+      }
       else if (g.kind === 'rune'){ inventory.push(g.r); banner(`🎁 Руна: ${RUNES[g.r].icon} ${RUNES[g.r].name}! ${KEY('craft')} — вставить`, '#ffd25a'); sfx.rune(); }
       else { gainXp(g.v); sfx.gem(); }
     }

@@ -14,8 +14,14 @@ const ETYPES = {
 };
 const BOSSES = Object.keys(ETYPES).filter(k => ETYPES[k].boss);
 // враги крепнут всё быстрее: линейно плюс квадратичный довесок к концу забега
-const hpScale = () => { const s = tick / 60; return 1 + s / 70 + (s / 300) * (s / 300); };
-const dmgScale = () => 1 + tick / 60 / 400;
+// после 5-й минуты враги крепчают заметно быстрее, чтобы сильный билд не превращал забег в прогулку:
+// к 7-й минуте здоровье +1×, к 10-й +6×, урон растёт вдвое быстрее прежнего
+const LATE_SEC = 300;
+const lateSec = () => Math.max(0, tick / 60 - LATE_SEC);
+const hpScale = () => { const s = tick / 60, l = lateSec() / 120; return 1 + s / 70 + (s / 300) * (s / 300) + l * l; };
+const dmgScale = () => 1 + tick / 60 / 400 + lateSec() / 240;
+// руны с 5-й по 7-ю минуту постепенно падают реже, до 70% от обычного
+const runeLate = () => Math.max(0.7, 1 - lateSec() / 120 * 0.3);
 function spawnEnemy(type, x, y, elite, force){
   if (enemies.length >= 440 && !ETYPES[type].boss && type !== 'goblin' && !force) return null;
   if (x === undefined){

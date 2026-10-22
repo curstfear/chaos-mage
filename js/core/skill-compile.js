@@ -9,7 +9,7 @@ function compile(s, extra){
   const elMul = el === 'fire' ? 1.2 : el === 'blood' ? 1.6 : 1;
   return {
     form: s.form, el, color: el ? RUNES[el].color : PURE,
-    dmg: F.dmg * Math.pow(1.5, n('giant')) * Math.pow(1.6, n('overload')) * elMul * PACT.dmg * 0.85,
+    dmg: F.dmg * Math.pow(1.5, n('giant')) * Math.pow(1.6, n('overload')) * elMul * PACT.dmg * 0.78,
     cd: Math.max(6, Math.round(F.cd * Math.pow(0.6, n('rapid')) * Math.pow(0.85, n('swift')) * Math.pow(1.3, n('overload')) * PACT.cd)),
     size: Math.pow(1.5, n('giant')),
     speed: Math.pow(1.5, n('swift')) * (el === 'wind' ? 1.3 : 1) * PACT.proj, range: Math.pow(1.3, n('swift')) * PACT.proj,

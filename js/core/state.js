@@ -22,7 +22,7 @@ function setState(s){ state = s; document.body.dataset.state = s; setMusicGain()
 function newGame(){
   RUN = { seed: Math.random() * 1e9 | 0, biome: pick(Object.keys(BIOMES)), pact: null };
   PACT = pactStats(null);
-  player = { x: 0, y: 0, vx: 0, vy: 0, r: 14, hp: 100, maxHp: 100, inv: 0, dash: 0, dashCd: 0, face: 0, onIce: false };
+  player = { x: 0, y: 0, vx: 0, vy: 0, r: 14, hp: PACT.hp, maxHp: PACT.hp, inv: 0, dash: 0, dashCd: 0, face: 0, onIce: false };
   enemies = []; projs = []; meteors = []; puddles = []; ebullets = []; gems = []; particles = []; amb = []; zaps = []; beams = []; slashes = [];
   nums = []; scheduled = []; banners = []; nearProps = []; nearSolids = []; holes = [];
   pets = []; trail = []; toad = null; hasFeather = false; comboRuneCd = 0; mom = new Array(NSLOTS).fill(0);

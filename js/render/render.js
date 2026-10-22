@@ -197,6 +197,7 @@ function drawIndicators(){
   const tg = [];
   for (const e of enemies) if (e.wild) tg.push([e.x, e.y, '🐾']);
   if (toad) tg.push([toad.x, toad.y, '🐸']);
+  for (const g of gems) if (g.chain) tg.push([g.x, g.y, '🔗']);
   for (const h of nearProps) if (h.kind === 'nest' && !h.used && !hasPet('dragon')) tg.push([h.x, h.y, '🥚']);
   for (const s of nearSolids) if (s.type === 'owltree' && !s.used && !hasPet('owl')) tg.push([s.x, s.y - 60, '🦉']);
   for (const [x, y, icon] of tg){
@@ -312,6 +313,27 @@ function render(){
       ctx.globalAlpha = 0.6; ctx.drawImage(glow('#ff7a2e'), g.x - 26, g.y - 26, 52, 52); ctx.globalAlpha = 1;
       ctx.font = '22px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.fillText('🪶', g.x, g.y + Math.sin(tick * 0.1) * 4);
+      continue;
+    }
+    if (g.chain){
+      const pulse = 0.5 + 0.5 * Math.sin(tick * 0.15), y = g.y + Math.sin(tick * 0.1) * 3;
+      // столб света до неба
+      const beam = ctx.createLinearGradient(0, g.y - 220, 0, g.y);
+      beam.addColorStop(0, 'rgba(127,232,255,0)'); beam.addColorStop(1, `rgba(127,232,255,${0.45 + 0.3 * pulse})`);
+      ctx.fillStyle = beam; ctx.fillRect(g.x - 13 - 4 * pulse, g.y - 220, 26 + 8 * pulse, 220);
+      ctx.fillStyle = `rgba(255,255,255,${0.35 + 0.3 * pulse})`; ctx.fillRect(g.x - 3, g.y - 200, 6, 200);
+      ctx.globalAlpha = 0.6 + 0.3 * pulse;
+      ctx.drawImage(glow('#7fe8ff'), g.x - 40, y - 40, 80, 80);
+      ctx.globalAlpha = 1;
+      // кольцо из звеньев крутится вокруг руны
+      for (let k = 0; k < 8; k++){
+        const a = tick * 0.06 + k * TAU / 8, lx = g.x + Math.cos(a) * 24, ly = y + Math.sin(a) * 24 * 0.55;
+        ctx.save(); ctx.translate(lx, ly); ctx.rotate(a + Math.PI / 2);
+        ctx.strokeStyle = k % 2 ? '#ffe08a' : '#7fe8ff'; ctx.lineWidth = 2.5;
+        ctx.beginPath(); ctx.ellipse(0, 0, 5, 3, 0, 0, TAU); ctx.stroke(); ctx.restore();
+      }
+      ctx.font = '26px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('🔗', g.x, y);
       continue;
     }
     if (g.kind === 'heart' || g.kind === 'rune'){

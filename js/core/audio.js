@@ -88,6 +88,8 @@ const sfx = {
   thunder(){ noise(0.12, { type: 'highpass', f: 1500, vol: 0.15 }); noise(1.8, { type: 'lowpass', f: 400, to: 60, vol: 0.22, delay: 0.05, att: 0.03 }); },
   gust(){ noise(1.2, { type: 'bandpass', f: 300, to: 900, vol: 0.09, q: 1.5, att: 0.3 }); },
   gold(){ [523, 659, 784, 1047, 1319].forEach((f, i) => tone(f, 0.4, { type: 'triangle', vol: 0.06, delay: i * 0.08 })); },
+  // выпала/подобрана «Цепь»: звенящий перелив вверх
+  chain(){ [659, 880, 1175, 1568, 2093].forEach((f, i) => tone(f, 0.35, { type: 'triangle', vol: 0.06, delay: i * 0.05 })); tone(3136, 0.6, { vol: 0.025, delay: 0.25 }); },
   hole(){ if (can('hole', 120)) tone(140, 0.7, { type: 'sawtooth', vol: 0.05, to: 40 }); }
 };
 // фоновая музыка: низкий гул + случайные ноты из лада мира

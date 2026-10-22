@@ -157,6 +157,15 @@ for (const prof of PROFILES){
     if (touch && n && !(await g('!!autoTarget'))) throw new Error('автоприцел не выбрал цель');
     await shot('4-fight');
   });
+  await step('выпадение «Цепи»', async () => {
+    const n = await g("inventory.filter(r => r === 'trigger').length");
+    await g("dropRune(player.x + 260, player.y - 40, 'trigger')");
+    await sleep(400);
+    await shot('4-chain');
+    await g("for (const gm of gems) if (gm.chain){ gm.x = player.x; gm.y = player.y; }");
+    await sleep(300);
+    if (await g("inventory.filter(r => r === 'trigger').length") !== n + 1) throw new Error('цепь не подобралась');
+  });
   await step('мастерская', async () => {
     if (touch) await press('#tCraft'); else { await page.keyboard.press('Tab'); await sleep(150); }
     if (await g('state') !== 'craft') throw new Error('state = ' + await g('state'));

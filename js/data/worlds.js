@@ -21,7 +21,7 @@ const PACTS = {
   alchemist: { icon: '🧪', name: 'Алхимик',            desc: 'Начинаешь без навыка, зато с 6 случайными рунами.' }
 };
 function pactStats(id){
-  const P = { dmg: 1, hp: 100, r: 14, speed: 1, spawn: 1, xp: 1, rune: 1, ehp: 1,
+  const P = { dmg: 1, hp: 85, r: 14, speed: 1, spawn: 1, xp: 1, rune: 1, ehp: 1,
     // то, что меняет только прокачка (data/upgrades.js)
     cd: 1, proj: 1, crit: 0, critMul: 2, armor: 1, regen: 0, heal: 1, iframes: 1, lives: 0,
     magnet: 1, dashCd: 1, dashInv: 16, dodge: 0, shards: 1, choice: 0, pactChoice: 0, startRunes: 0, startLv: 0 };
