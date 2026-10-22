@@ -708,13 +708,6 @@ function render(){
     ctx.restore();
   }
   drawIndicators();
-  if (combo >= 10){
-    const big = combo >= 50, s = 1 + Math.min(combo, 300) / 300;
-    ctx.save(); ctx.translate(W - 30, 150); ctx.rotate(-0.06);
-    drawText(`КОМБО ×${combo}`, 0, 0, Math.round(26 * s), big ? `hsl(${tick * 6 % 360},100%,65%)` : '#ffd25a', 'right');
-    if (big) drawText(combo >= 150 ? '🔥 АБСОЛЮТНЫЙ ХАОС 🔥' : 'ВАКХАНАЛИЯ!', 0, 30 * TXT, 16, '#ffffff', 'right');
-    ctx.restore();
-  }
   banners.forEach((b, i) => {
     ctx.globalAlpha = Math.min(1, b.t / 30);
     drawText(b.text, W / 2, H * 0.24 + i * 36 * TXT, 24, b.color);

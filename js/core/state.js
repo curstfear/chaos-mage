@@ -2,7 +2,7 @@
 let RUN = { seed: 1, biome: 'abyss', pact: null }, PACT = pactStats(null);
 let player, enemies, projs, meteors, puddles, ebullets, gems, particles, amb, zaps, beams, slashes, nums, scheduled, banners;
 let slots, compiled, cds, inventory, slotDmg, nearProps, nearSolids, groundPat;
-let tick, kills, combo, comboTimer, bestCombo, level, xp, shake, bossTimer, bossCount, lastBoss, triggerBudget, detBudget;
+let tick, kills, score, combo, comboTimer, bestCombo, level, xp, shake, bossTimer, bossCount, lastBoss, triggerBudget, detBudget;
 let evTimer, ev, moonT, wind;
 let pets = [], trail = [], toad = null, toadTimer = 0, wildTimer = 0, hasFeather = false, comboRuneCd = 0, mom = [];
 let ties = [], pathLog = []; // «Привязь» и путь мага для «Тени»
@@ -32,7 +32,7 @@ function newGame(){
   slots[0].form = 'bolt';
   inventory = [pick(ELS), pick(MODS.filter(m => m !== 'wild' && m !== 'resonance'))];
   slotDmg = new Array(NSLOTS).fill(0); cds = new Array(NSLOTS).fill(20);
-  tick = 0; kills = 0; combo = 0; comboTimer = 0; bestCombo = 0; level = 1; xp = 0; shake = 0; bossTimer = 0; bossCount = 0; lastBoss = 'boss'; pendingLevels = 0;
+  tick = 0; kills = 0; score = 0; combo = 0; comboTimer = 0; bestCombo = 0; level = 1; xp = 0; shake = 0; bossTimer = 0; bossCount = 0; lastBoss = 'boss'; pendingLevels = 0;
   evTimer = 60 * 60; ev = null; moonT = 0; wind = { x: 1, y: 0 };
   weather = { type: 'clear', t: 60 * 75 }; gust = null; skyBolts = []; flash = 0;
   goldT = 0; goldTimer = Math.round(60 * rnd(150, 210)); destroyed = 0;

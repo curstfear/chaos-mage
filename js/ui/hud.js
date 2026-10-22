@@ -9,7 +9,8 @@ function updHud(){
   $('xpTxt').textContent = Math.floor(xp) + '/' + xpNeed();
   const sec = Math.floor(tick / 60);
   $('timer').textContent = `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`;
-  $('stat').textContent = `💀 ${kills}   🎒 ${inventory.length}`;
+  // на телефоне руны в рюкзаке и так видны на кнопке мастерской
+  $('stat').textContent = `🏆 ${score}   💀 ${kills}` + (TOUCH ? '' : `   🎒 ${inventory.length}`);
   const tags = [`${BIOMES[RUN.biome].icon} ${BIOMES[RUN.biome].name}`];
   if (RUN.pact) tags.push(`${PACTS[RUN.pact].icon} ${PACTS[RUN.pact].name}`);
   if (moonT > 0) tags.push(`🌕 луна ${Math.ceil(moonT / 60)} с`);

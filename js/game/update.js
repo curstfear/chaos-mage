@@ -502,7 +502,7 @@ function die(){
   const sec = Math.floor(tick / 60);
   const best = slotDmg.indexOf(Math.max(...slotDmg));
   $('deadStats').innerHTML = `<span>⏱ Время</span><b>${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}</b>
-    <span>⭐ Уровень</span><b>${level}</b><span>💀 Убито</span><b>${kills}</b><span>🔥 Комбо</span><b>${bestCombo}</b><span>🏚 Разрушено</span><b>${destroyed}</b><span>🐾 Питомцы</span><b>${pets.map(p => PETS[p.id].icon).join('') || '—'}</b><span>🎽 Шмотки</span><b>${Object.keys(WARD.own).length}/${Object.keys(ITEMS).length}</b>
+    <span>⭐ Уровень</span><b>${level}</b><span>💀 Убито</span><b>${kills}</b><span>🏚 Разрушено</span><b>${destroyed}</b><span>🐾 Питомцы</span><b>${pets.map(p => PETS[p.id].icon).join('') || '—'}</b><span>🎽 Шмотки</span><b>${Object.keys(WARD.own).length}/${Object.keys(ITEMS).length}</b>
     <span style="grid-column:1/-1;margin-top:6px;color:var(--dim)">${BIOMES[RUN.biome].icon} ${BIOMES[RUN.biome].name} · ${PACTS[RUN.pact].icon} ${PACTS[RUN.pact].name}</span>
     <span style="grid-column:1/-1;color:var(--dim)">Лучший навык: <b style="float:none">${skillName(slots[best])}</b> — ${Math.round(slotDmg[best])} урона</span>`;
   $('deadReward').innerHTML = `<div class="rwScore">🏆 ${R.score} очков${R.record ? ' <b>· новый рекорд!</b>' : ''}</div>` +

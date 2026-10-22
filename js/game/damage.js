@@ -177,6 +177,7 @@ function kill(e){
   }
   if (!e.static){
     kills++; combo++; comboTimer = 110;
+    score += e.boss ? 10 : e.elite ? 3 : 1; // очки на рекорд: обычный враг, элитный, босс
     if (combo > bestCombo) bestCombo = combo;
     sfx.kill(combo);
     if (kills === 500) unlockSet('street');

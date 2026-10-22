@@ -4,6 +4,8 @@
 // best — личные рекорды, top — 10 лучших забегов по очкам, player — имя и ключи для общего рейтинга (core/online.js).
 const META = { shards: 0, coins: 0, up: {}, runs: 0, bestSec: 0, kills: 0, best: { score: 0, kills: 0, level: 0 }, top: [], player: null };
 try { Object.assign(META, JSON.parse(localStorage.getItem('chaosMageMeta') || '{}')); } catch (e) {}
+// v2: очки стали 1 / 3 / 10 за врага — рекорды по старой формуле несравнимы, сбрасываем
+if (META.scoreV !== 2){ META.scoreV = 2; META.best.score = 0; META.top = []; }
 const saveMeta = () => { try { localStorage.setItem('chaosMageMeta', JSON.stringify(META)); } catch (e) {} };
 
 const upLvl = id => META.up[id] || 0;
@@ -47,8 +49,8 @@ function runReward(){
   const base = parts.reduce((s, [, v]) => s + v, 0);
   return { parts, total: Math.round(base * PACT.shards), bonus: PACT.shards > 1 ? Math.round(base * (PACT.shards - 1)) : 0 };
 }
-// очки забега — по ним строится таблица рекордов
-const runScore = () => kills * 10 + Math.floor(tick / 60) * 2 + (level - 1) * 50 + bossCount * 500;
+// очки забега (копятся за убийства в game/damage.js) — по ним строится таблица рекордов
+const runScore = () => score;
 // монеты: немного за каждый забег, чуть больше за долгий и с боссами
 const runCoins = () => 2 + Math.floor(tick / 60 / 30) + Math.floor(kills / 100) + bossCount * 4 + Math.floor(level / 5);
 function finishRun(){

@@ -282,7 +282,7 @@ for (const prof of PROFILES){
     if (await g('state') !== 'dead') throw new Error('state = ' + await g('state'));
     if (!(await g('META.shards') > shards)) throw new Error('осколки не начислились');
     if (!(await g('META.coins') > 0)) throw new Error('монеты не начислились');
-    if (await g('META.top.length') !== 1 || !(await g('META.best.score') > 0)) throw new Error('рекорд не записался');
+    if (await g('META.top.length') !== 1 || await g('META.best.score') !== await g('score')) throw new Error('рекорд не записался');
     await shot('8-dead');
     await press('#againBtn');
     if (await g('state') !== 'pact') throw new Error('state = ' + await g('state'));
