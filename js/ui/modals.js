@@ -1,5 +1,5 @@
 // ---------- модалки ----------
-function showModal(id){ document.querySelectorAll('.modal').forEach(m => m.classList.toggle('show', m.id === id)); for (const k in keys) keys[k] = false; }
+function showModal(id){ document.querySelectorAll('.modal').forEach(m => m.classList.toggle('show', m.id === id)); for (const k in keys) keys[k] = false; resetTouch(); }
 function closeModal(){ showModal(null); setState('play'); if (pendingLevels > 0) openPick('level'); }
 function openCraft(){ setState('craft'); selRune = -1; sortInv(); renderCraft(); showModal('craftM'); sfx.click(); }
 function openPause(){
@@ -17,7 +17,7 @@ $('optSound').onclick = () => { SET.sound = !SET.sound; saveSet(); applySound();
 $('optMusic').onclick = () => { SET.music = !SET.music; saveSet(); setMusicGain(); renderOpts(); sfx.click(); };
 $('optShake').onclick = () => { SET.shake = (SET.shake + 1) % 3; saveSet(); renderOpts(); sfx.click(); };
 function startRun(){
-  audioInit(); newGame(); setState('pact'); sfx.click();
+  audioInit(); goFullscreen(); newGame(); setState('pact'); sfx.click();
   const B = BIOMES[RUN.biome];
   $('biomeInfo').innerHTML = `Мир этого забега: <b style="color:var(--gold2)">${B.icon} ${B.name}</b><small>${B.desc}</small>`;
   const opts = Object.keys(PACTS).sort(() => Math.random() - 0.5).slice(0, 3);
@@ -49,7 +49,7 @@ function renderWard(){
 function unlockCostume(id){
   if (WARD.unlocked.includes(id)) return;
   WARD.unlocked.push(id); saveWard();
-  banner(`🎉 Новый костюм: ${COSTUMES[id].name}! (Esc → гардероб)`, '#ffe08a');
+  banner(`🎉 Новый костюм: ${COSTUMES[id].name}! (${KEY('pause')} → гардероб)`, '#ffe08a');
   sfx.level();
 }
 // сова: выбрать 3 руны в дар
@@ -164,7 +164,7 @@ function openPick(kind){
   if (kind === 'level'){
     const lv = level - pendingLevels + 1;
     $('pickTitle').innerHTML = 'НОВЫЙ УРОВЕНЬ!<span class="badge">ПАУЗА</span>';
-    $('pickSub').innerHTML = `Уровень ${lv}. Выбери руну — потом вставь её в мастерской (TAB).` +
+    $('pickSub').innerHTML = `Уровень ${lv}. Выбери руну — потом вставь её в мастерской (${KEY('craft')}).` +
       (SLOT_UNLOCK.includes(lv) ? '<br><b style="color:var(--gold2)">🔓 Открыт новый слот навыка!</b>' : '');
     sfx.level();
   } else {
@@ -178,7 +178,7 @@ function openPick(kind){
     if (kind === 'level') pendingLevels--;
     showModal(null); setState('play');
     if (pendingLevels > 0) openPick('level');
-    else banner(`+ ${RUNES[el.dataset.r].icon} ${RUNES[el.dataset.r].name} · TAB — вставить`, '#ffd25a');
+    else banner(`+ ${RUNES[el.dataset.r].icon} ${RUNES[el.dataset.r].name} · ${KEY('craft')} — вставить`, '#ffd25a');
   });
   showModal('pickM');
 }

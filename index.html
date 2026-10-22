@@ -2,7 +2,15 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#07060f">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Маг Хаоса">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
 <title>Маг Хаоса</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,6 +20,7 @@
 <link rel="stylesheet" href="css/modals.css">
 <link rel="stylesheet" href="css/workshop.css">
 <link rel="stylesheet" href="css/cards.css">
+<link rel="stylesheet" href="css/mobile.css">
 </head>
 <body>
 <canvas id="c"></canvas>
@@ -28,11 +37,27 @@
 <div id="hint"><kbd>TAB</kbd> мастерская · <kbd>SPACE</kbd> рывок · <kbd>ESC</kbd> пауза · <kbd>M</kbd> звук</div>
 <div id="skillbar"></div>
 
+<!-- сенсорное управление: видно только в режиме body.touch (css/mobile.css, js/core/touch.js) -->
+<div id="touchUI">
+  <div id="stickBase"><div id="stickKnob"></div></div>
+  <button class="tbtn" id="tPause" aria-label="Пауза">⏸</button>
+  <button class="tbtn" id="tCraft" aria-label="Мастерская">🔮<span id="tCraftN"></span></button>
+  <button class="tbtn" id="tDash" aria-label="Рывок">💨</button>
+</div>
+
 <div id="startM" class="modal show"><div class="box frame center" style="max-width:560px">
   <canvas id="logo" width="22" height="26" style="width:110px;height:130px"></canvas>
   <h2 class="ttl" style="font-size:26px">МАГ ХАОСА</h2>
   <div class="sub">Собирай руны, склеивай из них навыки и устраивай вакханалию.<br>Каждый забег — новый мир и новый пакт.</div>
-  <div class="keys">
+  <div class="keys tc">
+    <kbd>🕹</kbd><span>палец слева — бегать</span>
+    <kbd>🎯</kbd><span>навыки сами бьют ближайшего врага</span>
+    <kbd>👉</kbd><span>веди пальцем справа — целиться вручную</span>
+    <kbd>💨</kbd><span>кнопка или тап справа — рывок</span>
+    <kbd>🔮</kbd><span>мастерская навыков (пауза)</span>
+    <kbd>⏸</kbd><span>пауза и настройки</span>
+  </div>
+  <div class="keys kb">
     <kbd>WASD</kbd><span>бегать</span>
     <kbd>МЫШЬ</kbd><span>целиться — навыки стреляют сами</span>
     <kbd>SPACE</kbd><span>рывок сквозь врагов</span>
@@ -40,7 +65,7 @@
     <kbd>ESC</kbd><span>пауза и настройки</span>
     <kbd>M</kbd><span>звук вкл/выкл</span>
   </div>
-  <div class="sub">Руна 🔗 «Цепь» запускает следующий навык прямо из точки попадания. Отсюда и начинается хаос.<br>🐾 В мире прячутся питомцы. Как их заполучить — смотри в паузе (Esc).</div>
+  <div class="sub">Руна 🔗 «Цепь» запускает следующий навык прямо из точки попадания. Отсюда и начинается хаос.<br>🐾 В мире прячутся питомцы. Как их заполучить — смотри в паузе (<span class="kb">Esc</span><span class="tc">⏸</span>).</div>
   <div class="btnrow"><button class="pbtn" id="startBtn">ПОГНАЛИ!</button><button class="pbtn alt" id="wardBtn">ГАРДЕРОБ</button></div>
 </div></div>
 
@@ -53,17 +78,17 @@
 
 <div id="craftM" class="modal"><div class="box frame">
   <h2 class="ttl">МАСТЕРСКАЯ<span class="badge">ПАУЗА</span></h2>
-  <div class="sub">Выбери руну справа, потом кликни по подходящей ячейке навыка. Клик по занятой ячейке возвращает руну.</div>
+  <div class="sub">Выбери руну справа, потом нажми на подходящую ячейку навыка. Нажатие на занятую ячейке возвращает руну.</div>
   <div class="cols">
     <div id="slotsUI"></div>
     <div>
       <div style="font-weight:700;margin-bottom:10px;font-size:16px;color:var(--gold2)">Твои руны</div>
       <div class="inv" id="invUI"></div>
-      <div id="tip">Наведи на руну, чтобы узнать, что она делает.</div>
+      <div id="tip"><span class="kb">Наведи на руну</span><span class="tc">Нажми на руну</span>, чтобы узнать, что она делает.</div>
       <div class="legend"><i style="background:var(--form)"></i>форма — что это за навык<br><i style="background:var(--el)"></i>стихия — чем бьёт<br><i style="background:var(--mod)"></i>модификатор — как усиливается (можно повторять!)</div>
     </div>
   </div>
-  <div class="foot"><span><kbd>TAB</kbd> или <kbd>ESC</kbd> — закрыть и продолжить</span><button class="pbtn" id="craftClose">В БОЙ ▶</button></div>
+  <div class="foot"><span class="kb"><kbd>TAB</kbd> или <kbd>ESC</kbd> — закрыть и продолжить</span><span class="tc"></span><button class="pbtn" id="craftClose">В БОЙ ▶</button></div>
 </div></div>
 
 <div id="pickM" class="modal"><div class="box frame center" style="max-width:760px">
@@ -118,6 +143,7 @@
 <script src="js/core/state.js"></script>
 <script src="js/core/skill-compile.js"></script>
 <script src="js/core/input.js"></script>
+<script src="js/core/touch.js"></script>
 <script src="js/ui/modals.js"></script>
 <script src="js/game/world.js"></script>
 <script src="js/game/skills.js"></script>

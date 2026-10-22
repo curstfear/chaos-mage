@@ -16,7 +16,7 @@ const weatherName = t => t === 'rain' && RUN.biome === 'ice' ? '🌨 Снего�
 const chunks = new Map();
 const cam = { x: 0, y: 0 };
 let state = 'start'; // start | pact | play | craft | pick | pause | dead
-function setState(s){ state = s; setMusicGain(); }
+function setState(s){ state = s; document.body.dataset.state = s; setMusicGain(); } // data-state нужен CSS: кнопки для пальцев видны только в бою
 
 function newGame(){
   RUN = { seed: Math.random() * 1e9 | 0, biome: pick(Object.keys(BIOMES)), pact: null };
@@ -55,7 +55,7 @@ function choosePact(id){
   setState('play'); showModal(null);
   musicStart();
   banner(`${BIOMES[RUN.biome].icon} ${BIOMES[RUN.biome].name}`, '#ffffff');
-  banner(id === 'alchemist' ? 'Собери первый навык — TAB' : 'TAB — мастерская навыков', '#ffd25a');
+  banner(id === 'alchemist' ? `Собери первый навык — ${KEY('craft')}` : `${KEY('craft')} — мастерская навыков`, '#ffd25a');
 }
 const unlocked = () => SLOT_UNLOCK.filter(l => level >= l).length;
 // требования растут экспоненциально: каждый следующий уровень ~на 65% дороже

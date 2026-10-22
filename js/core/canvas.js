@@ -1,12 +1,18 @@
 // ---------- холст ----------
 const cv = document.getElementById('c'), ctx = cv.getContext('2d');
 const dark = document.createElement('canvas'), dctx = dark.getContext('2d');
-let W, H, DPR, vignette;
+// W, H — размер видимой части мира в игровых единицах, а не в пикселях экрана.
+// На маленьких экранах (телефон) ZOOM < 1: камера «отъезжает», и видно столько же мира, сколько на ПК.
+// SCALE — сколько физических пикселей холста приходится на одну игровую единицу.
+// TXT — множитель для текста на холсте, чтобы цифры урона не становились мелкими при отдалении.
+let W, H, DPR, ZOOM, SCALE, TXT, vignette;
 function resize(){
   DPR = Math.min(devicePixelRatio || 1, 2);
-  W = innerWidth; H = innerHeight;
-  cv.width = dark.width = W * DPR; cv.height = dark.height = H * DPR;
-  cv.style.width = W + 'px'; cv.style.height = H + 'px';
+  ZOOM = clamp(Math.min(innerWidth, innerHeight) / 640, 0.6, 1);
+  SCALE = DPR * ZOOM; TXT = 1 / Math.sqrt(ZOOM);
+  W = innerWidth / ZOOM; H = innerHeight / ZOOM;
+  cv.width = dark.width = Math.round(innerWidth * DPR); cv.height = dark.height = Math.round(innerHeight * DPR);
+  cv.style.width = innerWidth + 'px'; cv.style.height = innerHeight + 'px';
   vignette = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.35, W / 2, H / 2, Math.max(W, H) * 0.75);
   vignette.addColorStop(0, 'rgba(0,0,0,0)'); vignette.addColorStop(1, 'rgba(0,0,0,.6)');
 }

@@ -5,19 +5,18 @@ function update(){
   ensureChunks();
   hazards();
   // игрок
-  const mx = (keys.KeyD || keys.ArrowRight ? 1 : 0) - (keys.KeyA || keys.ArrowLeft ? 1 : 0);
-  const my = (keys.KeyS || keys.ArrowDown ? 1 : 0) - (keys.KeyW || keys.ArrowUp ? 1 : 0);
-  const md = Math.hypot(mx, my) || 1;
+  const [mx, my] = moveDir();
   if (P.dash > 0){ P.dash--; if (tick % 2 === 0) particles.push({ x: P.x, y: P.y, vx: 0, vy: 0, life: 16, max: 16, color: '#ffd25a', r: 10 }); }
   else {
     const k = P.onIce ? 0.035 : 0.25, sp = 3.4 * PACT.speed;
-    P.vx += (mx / md * sp - P.vx) * k; P.vy += (my / md * sp - P.vy) * k;
+    P.vx += (mx * sp - P.vx) * k; P.vy += (my * sp - P.vy) * k;
   }
   P.x += P.vx; P.y += P.vy;
   if (RUN.pact === 'wind'){ P.x += wind.x * 0.9; P.y += wind.y * 0.9; }
   if (pushOut(P, P.r * 0.8) && P.dash > 0) sfx.thud();
   if (P.dashCd > 0) P.dashCd--; if (P.inv > 0) P.inv--;
   if (RUN.pact === 'vampire') P.hp -= 1.2 / 60; else P.hp = Math.min(P.maxHp, P.hp + 0.012);
+  if (TOUCH) updateAutoAim();
   const [ax, ay] = aimWorld(); P.face = Math.atan2(ay - P.y, ax - P.x);
 
   spawner(); events();
@@ -331,7 +330,7 @@ function update(){
       g.taken = true;
       if (g.kind === 'heart'){ P.hp = Math.min(P.maxHp, P.hp + 20); banner('+20 ❤️', '#ff5a7a'); sfx.rune(); }
       else if (g.kind === 'feather'){ hasFeather = true; banner('🪶 Перо феникса! Если погибнешь — возродишься', '#ff8a3d'); sfx.rune(); }
-      else if (g.kind === 'rune'){ inventory.push(g.r); banner(`🎁 Руна: ${RUNES[g.r].icon} ${RUNES[g.r].name}! TAB — вставить`, '#ffd25a'); sfx.rune(); }
+      else if (g.kind === 'rune'){ inventory.push(g.r); banner(`🎁 Руна: ${RUNES[g.r].icon} ${RUNES[g.r].name}! ${KEY('craft')} — вставить`, '#ffd25a'); sfx.rune(); }
       else { gainXp(g.v); sfx.gem(); }
     }
   }

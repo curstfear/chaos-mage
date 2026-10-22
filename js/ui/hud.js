@@ -23,13 +23,14 @@ function updHud(){
   $('skillbar').innerHTML = slots.map((s, i) => {
     if (i >= un) return `<div class="sk locked"><div class="ic">🔒</div><div class="lv">УР${SLOT_UNLOCK[i]}</div></div>`;
     const c = compiled[i];
-    if (!c) return `<div class="sk"><span class="n">${i + 1}</span><div class="ic" style="opacity:.5">➕</div><div class="lv">TAB</div></div>`;
+    if (!c) return `<div class="sk"><span class="n">${i + 1}</span><div class="ic" style="opacity:.5">➕</div><div class="lv">${KEY('craft')}</div></div>`;
     const mods = s.mods.filter(Boolean).map(r => RUNES[r].icon).join('');
     const left = Math.max(0, cds[i] / c.cd);
     return `<div class="sk" style="--sc:${c.color}"><span class="n">${i + 1}</span><div class="ic">${RUNES[s.form].icon}</div>` +
       (s.element ? `<div class="el">${RUNES[s.element].icon}</div>` : '') + (mods ? `<div class="md">${mods}</div>` : '') +
       `<div class="cd" style="background:conic-gradient(rgba(8,4,20,.72) ${left}turn,transparent 0)"></div></div>`;
   }).join('');
+  updTouchUI();
 }
 function drawPortrait(){
   const img = SPR.mage[Math.floor(performance.now() / 160) % 4];

@@ -1,0 +1,13 @@
+{
+  "name": "chaos-mage",
+  "private": true,
+  "type": "module",
+  "description": "Маг Хаоса — браузерная игра без сборки, деплоится на GitHub Pages как есть",
+  "scripts": {
+    "dev": "node tools/serve.mjs",
+    "test": "node tools/smoke.mjs"
+  },
+  "devDependencies": {
+    "puppeteer-core": "^24.1.0"
+  }
+}

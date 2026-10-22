@@ -249,8 +249,8 @@ function drawDarkness(ox, oy){
   dctx.globalCompositeOperation = 'source-over';
   dctx.fillStyle = 'rgba(0,0,0,0.94)'; dctx.fillRect(0, 0, dark.width, dark.height);
   dctx.globalCompositeOperation = 'destination-out';
-  const L = glow('#ffffff'), sx = x => (x - cam.x + W / 2 + ox) * DPR, sy = y => (y - cam.y + H / 2 + oy) * DPR;
-  const light = (x, y, r) => dctx.drawImage(L, sx(x) - r * DPR, sy(y) - r * DPR, r * 2 * DPR, r * 2 * DPR);
+  const L = glow('#ffffff'), sx = x => (x - cam.x + W / 2 + ox) * SCALE, sy = y => (y - cam.y + H / 2 + oy) * SCALE;
+  const light = (x, y, r) => dctx.drawImage(L, sx(x) - r * SCALE, sy(y) - r * SCALE, r * 2 * SCALE, r * 2 * SCALE);
   light(player.x, player.y, 240);
   for (let i = 0; i < projs.length; i += Math.max(1, projs.length / 120 | 0)) light(projs[i].x, projs[i].y, 60);
   for (const p of particles) if (p.ring) light(p.x, p.y, p.r * 1.4);
@@ -259,7 +259,7 @@ function drawDarkness(ox, oy){
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.drawImage(dark, 0, 0);
   // в темноте видны только злые глазки
-  ctx.setTransform(DPR, 0, 0, DPR, DPR * (W / 2 - cam.x + ox), DPR * (H / 2 - cam.y + oy));
+  ctx.setTransform(SCALE, 0, 0, SCALE, SCALE * (W / 2 - cam.x + ox), SCALE * (H / 2 - cam.y + oy));
   ctx.fillStyle = '#ff3d5a';
   for (const e of enemies){
     if (e.static) continue;
@@ -284,19 +284,20 @@ function drawWeather(){
   if (flash > 0){ ctx.fillStyle = `rgba(235,240,255,${flash * 0.35})`; ctx.fillRect(0, 0, W, H); }
 }
 function drawText(text, x, y, size, color, align){
-  ctx.font = `700 ${size}px ${FONT}`; ctx.textAlign = align || 'center'; ctx.textBaseline = 'middle';
+  size = Math.round(size * TXT); ctx.font = `700 ${size}px ${FONT}`; ctx.textAlign = align || 'center'; ctx.textBaseline = 'middle';
   ctx.lineWidth = Math.max(3, size / 4); ctx.strokeStyle = '#0b0618'; ctx.lineJoin = 'round';
-  ctx.strokeText(text, x, y); ctx.fillStyle = color; ctx.fillText(text, x, y);
+  const mw = W - 24; // длинный баннер на узком экране сжимается, а не обрезается
+  ctx.strokeText(text, x, y, mw); ctx.fillStyle = color; ctx.fillText(text, x, y, mw);
 }
 function render(){
   const B = BIOMES[RUN.biome];
-  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  ctx.setTransform(SCALE, 0, 0, SCALE, 0, 0);
   ctx.imageSmoothingEnabled = false;
   ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
   ctx.fillStyle = B.bg; ctx.fillRect(0, 0, W, H);
   const sh = Math.min(shake, 10) * SHAKE_MUL[SET.shake];
   const ox = sh ? rnd(-sh, sh) : 0, oy = sh ? rnd(-sh, sh) : 0;
-  ctx.setTransform(DPR, 0, 0, DPR, DPR * (W / 2 - cam.x + ox), DPR * (H / 2 - cam.y + oy));
+  ctx.setTransform(SCALE, 0, 0, SCALE, SCALE * (W / 2 - cam.x + ox), SCALE * (H / 2 - cam.y + oy));
   drawGround();
 
   const vis = (x, y, m) => Math.abs(x - cam.x) < W / 2 + m && Math.abs(y - cam.y) < H / 2 + m;
@@ -507,7 +508,7 @@ function render(){
   ctx.globalAlpha = 1;
 
   // экранный слой
-  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  ctx.setTransform(SCALE, 0, 0, SCALE, 0, 0);
   if (moonT > 0){ ctx.fillStyle = `rgba(160,0,30,${0.12 + 0.04 * Math.sin(tick * 0.05)})`; ctx.fillRect(0, 0, W, H); }
   drawWeather();
   if (goldT > 0){ ctx.fillStyle = `rgba(255,190,40,${0.1 + 0.03 * Math.sin(tick * 0.06)})`; ctx.fillRect(0, 0, W, H); }
@@ -523,17 +524,18 @@ function render(){
     const big = combo >= 50, s = 1 + Math.min(combo, 300) / 300;
     ctx.save(); ctx.translate(W - 30, 150); ctx.rotate(-0.06);
     drawText(`КОМБО ×${combo}`, 0, 0, Math.round(26 * s), big ? `hsl(${tick * 6 % 360},100%,65%)` : '#ffd25a', 'right');
-    if (big) drawText(combo >= 150 ? '🔥 АБСОЛЮТНЫЙ ХАОС 🔥' : 'ВАКХАНАЛИЯ!', 0, 30, 16, '#ffffff', 'right');
+    if (big) drawText(combo >= 150 ? '🔥 АБСОЛЮТНЫЙ ХАОС 🔥' : 'ВАКХАНАЛИЯ!', 0, 30 * TXT, 16, '#ffffff', 'right');
     ctx.restore();
   }
   banners.forEach((b, i) => {
     ctx.globalAlpha = Math.min(1, b.t / 30);
-    drawText(b.text, W / 2, H * 0.24 + i * 36, 24, b.color);
+    drawText(b.text, W / 2, H * 0.24 + i * 36 * TXT, 24, b.color);
   });
   ctx.globalAlpha = 1;
-  // пиксельный прицел
-  if (state === 'play'){
-    const x = Math.round(mouse.x), y = Math.round(mouse.y);
+  // пиксельный прицел: на ПК под курсором, с пальцами — на цели автоприцела или по направлению правого стика
+  if (state === 'play' && (!TOUCH || autoTarget || aimStick.on)){
+    const [ax, ay] = aimWorld();
+    const x = Math.round(TOUCH ? ax - cam.x + W / 2 : mouse.x), y = Math.round(TOUCH ? ay - cam.y + H / 2 : mouse.y);
     ctx.fillStyle = '#0b0618';
     for (const [dx, dy, w, h] of [[-11, -2, 8, 4], [3, -2, 8, 4], [-2, -11, 4, 8], [-2, 3, 4, 8]]) ctx.fillRect(x + dx - 1, y + dy - 1, w + 2, h + 2);
     ctx.fillStyle = '#ffe08a';
