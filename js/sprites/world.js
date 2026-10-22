@@ -17,7 +17,10 @@ const PAL = {
            ground: ['#110e24', '#0c0a1c', '#16122e', '#1e1a3c'], tuft: '#7fe8ff', flower: '#ff7ad8', shard: '#9ff0ff', shardD: '#3ab0d0' },
   desert: { stone: '#c89a5a', stoneD: '#966a34', stoneL: '#ecc68a', glow: '#ffe08a', leaf: '#5a8a3a', leafD: '#3a6024', leafL: '#86b85a', bark: '#7a5a34', barkD: '#4a3420',
             roof: '#a0542a', roofD: '#6e3418', wall: '#d8b07a', wallD: '#a8804a', rock: '#a87a4a', rockD: '#744e2a', rockL: '#d0a470',
-            ground: ['#c49a5e', '#b48a50', '#d0a86c', '#a8804a'], tuft: '#8a7040', flower: '#ff6a8a' }
+            ground: ['#c49a5e', '#b48a50', '#d0a86c', '#a8804a'], tuft: '#8a7040', flower: '#ff6a8a' },
+  forge: { stone: '#5a4a44', stoneD: '#3a2e2a', stoneL: '#8a7060', glow: '#ffb347', leaf: '#4a8a7a', leafD: '#2e5a50', leafL: '#7fd0c0', bark: '#4a3a34', barkD: '#2a201c',
+           roof: '#6a3a24', roofD: '#44241a', wall: '#5a4a44', wallD: '#3a2e2a', rock: '#4a3e3a', rockD: '#2e2622', rockL: '#6e5c54',
+           ground: ['#1e1714', '#17110e', '#251c18', '#2e231c'], tuft: '#5a4a3a', flower: '#ffb347' }
 };
 function treeSprite(P, biome){
   const b = PB(28, 40);
@@ -38,6 +41,13 @@ function treeSprite(P, biome){
     disc(b, 14.5, 10, 3.5, 2, P.leaf); disc(b, 5.5, 16, 1.6, 1.2, P.leaf); disc(b, 22.5, 12, 1.6, 1.2, P.leaf);
     for (const [x, y] of [[11, 14], [18, 18], [11, 26], [18, 31], [4, 20], [24, 15]]) pset(b, x, y, '#f4ecd8');
     disc(b, 14.5, 7.5, 2, 1.6, P.flower);
+  } else if (biome === 'forge'){
+    // дымовая труба вместо дерева: ржавая, в зелёных от патины обручах, сверху тлеет
+    rect(b, 9, 8, 10, 31, P.stone); rect(b, 15, 8, 4, 31, P.stoneD, P.stone); rect(b, 9, 8, 1, 31, P.stoneL, P.stone);
+    for (const y of [14, 24, 33]){ rect(b, 8, y, 12, 2, P.leaf); rect(b, 16, y, 4, 2, P.leafD); }
+    rect(b, 7, 5, 14, 4, P.stoneD); rect(b, 7, 5, 14, 1, P.stoneL); rect(b, 10, 6, 8, 1, P.glow);
+    for (const [x, y, r] of [[14, 2, 2.4], [18, 1, 1.8], [10, 1.5, 1.5]]) disc(b, x, y, r, r, '#8a8090');
+    for (const [x, y] of [[10, 18], [17, 28], [11, 36]]) pset(b, x, y, '#7a3a1a');
   } else if (biome === 'caves'){
     // друза кристаллов вместо дерева
     for (const [x, top, w, c, d] of [[14, 2, 5, P.shard, P.shardD], [8, 14, 4, P.leaf, P.leafD], [20, 10, 4, P.leaf, P.leafD], [4, 24, 3, P.shard, P.shardD], [24, 22, 3, P.shard, P.shardD]]){
@@ -174,6 +184,12 @@ function groundTile(P, biome){
   if (biome === 'lava') for (let k = 0; k < 2; k++){ let x = Math.random() * 32, y = Math.random() * 32; g.fillStyle = '#ff5a1f'; for (let s = 0; s < 5; s++){ g.fillRect(x | 0, y | 0, 1, 1); x += rnd(-1, 2); y += rnd(-1, 1.5); } }
   if (biome === 'caves'){ for (let k = 0; k < 5; k++){ g.fillStyle = k % 2 ? '#3ab0d0' : '#b03a96'; g.fillRect(Math.random() * 32 | 0, Math.random() * 32 | 0, 1, 1); } }
   if (biome === 'desert'){ g.fillStyle = '#a8804a'; for (let k = 0; k < 3; k++){ const y = Math.random() * 32 | 0, x = Math.random() * 32 | 0; g.fillRect(x, y, 6, 1); g.fillRect(x + 2, y + 1, 4, 1); } }
+  if (biome === 'forge'){
+    // клёпаные железные плиты с ржавыми подтёками
+    g.fillStyle = '#100a08'; g.fillRect(0, 0, 32, 1); g.fillRect(0, 0, 1, 32); g.fillRect(0, 16, 32, 1);
+    g.fillStyle = '#4a3a30'; for (const [x, y] of [[3, 3], [28, 3], [3, 13], [28, 13], [3, 19], [28, 19], [3, 29], [28, 29]]) g.fillRect(x, y, 1, 1);
+    g.fillStyle = '#4a2414'; for (let k = 0; k < 2; k++){ const x = Math.random() * 30 | 0, y = Math.random() * 24 | 0; g.fillRect(x, y, 1, 5); g.fillRect(x + 1, y + 1, 1, 3); }
+  }
   if (biome === 'ice'){ g.fillStyle = '#2e5a80'; for (let k = 0; k < 3; k++){ const x = Math.random() * 32 | 0, y = Math.random() * 32 | 0; g.fillRect(x, y, 4, 1); } }
   return c;
 }
@@ -184,7 +200,8 @@ const BUILD_SETS = {
   ice:   [['tree', 5], ['rock', 3], ['snowman', 1], ['pillar', 1], ['wall', 2], ['house', 1]],
   swamp: [['tree', 4], ['mushroom', 3], ['rock', 2], ['totem', 2], ['wall', 1], ['house', 1]],
   caves: [['tree', 5], ['rock', 3], ['obelisk', 2], ['pillar', 2], ['wall', 1], ['house', 1]],
-  desert: [['tree', 4], ['rock', 3], ['pillar', 2], ['obelisk', 1], ['wall', 2], ['house', 1], ['totem', 1]]
+  desert: [['tree', 4], ['rock', 3], ['pillar', 2], ['obelisk', 1], ['wall', 2], ['house', 1], ['totem', 1]],
+  forge: [['tree', 4], ['rock', 3], ['pillar', 2], ['wall', 3], ['house', 2], ['obelisk', 1]]
 };
 // коллайдер у основания: c — круг (радиус), r — прямоугольник (ширина, глубина)
 const BUILD = {
@@ -212,6 +229,8 @@ function buildSprites(){
   SPR.goblin = [0, 1].map(goblinSprite);
   SPR.bomber = [0, 1].map(bomberSprite); SPR.shield = [0, 1].map(shieldSprite); SPR.wasp = [0, 1].map(waspSprite);
   SPR.queen = [0, 1].map(queenSprite); SPR.clock = [0, 1].map(clockSprite);
+  SPR.cog = [0, 1].map(cogSprite); SPR.smelter = [0, 1].map(smelterSprite); SPR.drone = [0, 1].map(droneSprite);
+  SPR.smith = [0, 1].map(smithSprite); SPR.titan = [0, 1].map(titanSprite);
   SPR.altar = altarSprite(); SPR.gem = gemSprite(); SPR.turret = turretSprite(); SPR.ghost = ghostSprite();
   SPR.nest = nestSprite(); SPR.egg = eggSprite();
   SPR.shrine = shrineSprite(); SPR.heart = heartSprite();

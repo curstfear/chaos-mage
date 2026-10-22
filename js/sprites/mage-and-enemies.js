@@ -260,6 +260,76 @@ function clockSprite(f){
   outline(b, '#0a0012');
   return toCanvas(b);
 }
+// ---------- механизмы Ржавой кузни ----------
+function cogSprite(f){
+  const b = PB(18, 18);
+  for (let k = 0; k < 8; k++){ const a = k / 8 * TAU + (f ? TAU / 16 : 0); rect(b, 8 + Math.cos(a) * 7.2, 8 + Math.sin(a) * 7.2, 2, 2, '#a8823a'); }
+  ball(b, 9, 9, 6.5, 6.5, '#c8a050', '#8a6a2a', '#ecd08a');
+  disc(b, 9, 9, 3.4, 3.4, '#f4ecd8'); disc(b, 9.6, 9.4, 1.6, 1.6, '#1a0f0a'); pset(b, 8, 8, '#ffffff');
+  outline(b, OUT);
+  return toCanvas(b);
+}
+function smelterSprite(f){
+  const b = PB(26, 26), s = f ? 1 : 0;
+  rect(b, 6 - s, 21, 5, 4, '#2e2622'); rect(b, 15 + s, 21, 5, 4, '#2e2622');
+  ball(b, 13, 14, 10, 9, '#5a4a44', '#3a2e2a', '#8a7060');
+  // решётка топки на брюхе и тигель с металлом на макушке
+  rect(b, 8, 15, 10, 5, '#1a0f0a'); for (const x of [9, 12, 15]) rect(b, x, 16, 2, 3, '#ff8a3d');
+  pset(b, 10, 17, '#ffe08a'); pset(b, 13, 17, '#ffe08a');
+  disc(b, 13, 6, 7, 2.6, '#3a2e2a'); disc(b, 13, 5.6, 5.6, 1.8, '#ff8a3d'); pset(b, 11, 5, '#ffe08a'); pset(b, 15, 6, '#ffe08a');
+  rect(b, 8, 10, 3, 2, '#ffd25a'); rect(b, 15, 10, 3, 2, '#ffd25a');
+  pset(b, 20, 8 + s * 2, '#ff8a3d'); pset(b, 20, 9 + s * 2, '#ffb347');
+  outline(b, OUT);
+  return toCanvas(b);
+}
+function droneSprite(f){
+  const b = PB(20, 18);
+  line(b, f ? 3 : 6, 2, f ? 16 : 13, 2, '#c8d2e0'); rect(b, 9, 2, 2, 3, '#5a5a6a');
+  ball(b, 10, 9, 6.5, 5.5, '#7fd0c0', '#3a8a7a', '#c8fff0');
+  disc(b, 10, 9.5, 2.6, 2.6, '#1a0f0a'); disc(b, 10, 9.5, 1.5, 1.5, '#ff3d3d'); pset(b, 9, 9, '#ffd0d0');
+  // сварочная рука с искрой
+  line(b, 14, 13, 17, 16, '#8a7060'); pset(b, 18, 17, f ? '#ffe08a' : '#ffffff');
+  rect(b, 5, 14, 2, 2, '#3a8a7a');
+  outline(b, OUT);
+  return toCanvas(b);
+}
+function smithSprite(f){
+  const b = PB(42, 42), up = f ? -2 : 0;
+  rect(b, 12, 34, 6, 6, '#3a2a20'); rect(b, 22, 34, 6, 6, '#3a2a20'); rect(b, 11, 39, 8, 3, '#1a1210'); rect(b, 21, 39, 8, 3, '#1a1210');
+  ball(b, 20, 25, 12, 10, '#c87a5a', '#8a4a34', '#e8a080');
+  // кожаный фартук
+  rect(b, 12, 20, 16, 16, '#6a4a2a'); rect(b, 22, 20, 6, 16, '#4a3420', '#6a4a2a'); rect(b, 12, 20, 16, 1, '#8a6a3a'); rect(b, 18, 27, 4, 3, '#c8a050');
+  ball(b, 7, 25, 4, 6, '#c87a5a', '#8a4a34'); ball(b, 33, 22 + up, 4, 6, '#c87a5a', '#8a4a34');
+  // голова: шлем, очки-гоглы и огненная борода
+  ball(b, 20, 12, 7, 7, '#c87a5a', '#8a4a34');
+  disc(b, 20, 7, 8, 4, '#5a4a44'); rect(b, 12, 7, 17, 2, '#8a7060');
+  rect(b, 15, 10, 4, 3, '#1a0f0a'); rect(b, 22, 10, 4, 3, '#1a0f0a'); rect(b, 16, 11, 2, 1, '#ffb347'); rect(b, 23, 11, 2, 1, '#ffb347');
+  tri(b, 13, 14, 27, 14, 20, 27, '#d8602a'); tri(b, 20, 14, 27, 14, 20, 27, '#a8401a', '#d8602a'); pset(b, 17, 17, '#ffb347'); pset(b, 21, 21, '#ffb347');
+  // молот
+  line(b, 34, 22 + up, 36, 8 + up, '#6a4a2a');
+  rect(b, 31, 2 + up, 10, 7, '#5a5a6a'); rect(b, 31, 2 + up, 10, 1, '#9a9aaa'); rect(b, 31, 7 + up, 10, 1, '#ff8a3d');
+  outline(b, OUT);
+  return toCanvas(b);
+}
+function titanSprite(f){
+  const b = PB(46, 46), s = f ? 1 : 0;
+  // ноги-поршни
+  rect(b, 12, 32, 7, 11, '#3a2e2a'); rect(b, 27, 32, 7, 11, '#3a2e2a'); rect(b, 13, 34 + s, 5, 2, '#8a7060'); rect(b, 28, 35 - s, 5, 2, '#8a7060');
+  rect(b, 10, 42, 11, 4, '#2a201c'); rect(b, 25, 42, 11, 4, '#2a201c');
+  // трубы на спине
+  rect(b, 12, 2, 5, 12, '#4a3e3a'); rect(b, 29, 4, 5, 10, '#4a3e3a'); rect(b, 12, 2, 5, 2, '#7fd0c0'); rect(b, 29, 4, 5, 2, '#7fd0c0');
+  // корпус в заплатах патины, в груди — топка
+  rect(b, 8, 12, 30, 22, '#6a4a3a'); rect(b, 26, 12, 12, 22, '#4a342a', '#6a4a3a'); rect(b, 8, 12, 30, 2, '#9a7060');
+  rect(b, 10, 15, 6, 5, '#4a8a7a'); rect(b, 30, 15, 6, 5, '#2e5a50');
+  disc(b, 23, 24, 6, 5, '#1a0f0a'); disc(b, 23, 24.5, 4.4, 3.4, '#ff8a3d'); disc(b, 23, 25, 2.4, 1.8, '#ffe08a');
+  rect(b, 17, 6, 12, 7, '#5a4a44'); rect(b, 19, 8, 8, 3, '#1a0f0a'); rect(b, 20 + s * 3, 9, 3, 1, '#7fd0c0');
+  // руки-пушки
+  rect(b, 1, 16, 7, 12, '#5a4a44'); rect(b, 0, 26, 9, 4, '#3a2e2a'); disc(b, 4.5, 30, 2, 1.4, '#1a0f0a');
+  rect(b, 38, 16, 7, 12, '#5a4a44'); rect(b, 37, 26, 9, 4, '#3a2e2a'); disc(b, 41.5, 30, 2, 1.4, '#1a0f0a');
+  for (const [x, y] of [[10, 31], [35, 31], [10, 13], [35, 13], [4, 18], [41, 18]]) pset(b, x, y, '#c8a050');
+  outline(b, OUT);
+  return toCanvas(b);
+}
 function crystalSprite(col){
   const b = PB(22, 24), dk = mix(col, '#000000', 0.4), lt = mix(col, '#ffffff', 0.5);
   tri(b, 2, 22, 4.5, 10, 8, 22, col); tri(b, 4.5, 10, 8, 22, 5, 22, dk, col);

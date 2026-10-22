@@ -5,7 +5,8 @@ const BIOMES = {
   ice:   { name: 'Ледяная пустошь',  icon: '🧊', bg: '#0a1a2a', hazard: 'ice',    crystal: '#8fe3ff', amb: '#ffffff', desc: 'На льду скользко, а враги на нём вязнут.' },
   swamp: { name: 'Ядовитые топи',    icon: '🍄', bg: '#0a130a', hazard: 'geyser', crystal: '#7dff5a', amb: '#9dff7a', desc: 'Ядовитые гейзеры извергаются каждые несколько секунд.' },
   caves: { name: 'Кристальные пещеры', icon: '💎', bg: '#0c0a1e', hazard: 'resonator', crystal: '#ff7ad8', amb: '#9ff0ff', desc: 'Кристаллы-резонаторы то и дело бьют лучом насквозь — и по врагам, и по тебе.' },
-  desert: { name: 'Зыбучие дюны',    icon: '🏜️', bg: '#2a1e10', hazard: 'quicksand', crystal: '#ffd27a', amb: '#e8c88a', desc: 'Зыбучие пески вязнут под ногами и тянут на дно. Ветер несёт песок.' }
+  desert: { name: 'Зыбучие дюны',    icon: '🏜️', bg: '#2a1e10', hazard: 'quicksand', crystal: '#ffd27a', amb: '#e8c88a', desc: 'Зыбучие пески вязнут под ногами и тянут на дно. Ветер несёт песок.' },
+  forge: { name: 'Ржавая кузня',     icon: '⚙️', bg: '#16100c', hazard: 'gear', crystal: '#7fd0c0', amb: '#ffb347', desc: 'Шестерни-платформы крутят всех по кругу, а зубцы по краю перемалывают и врагов, и тебя. Здесь водятся механизмы.' }
 };
 const PACTS = {
   glass:     { icon: '🔮', name: 'Стеклянная пушка',  desc: 'Весь урон ×2, но здоровье всего 50.' },

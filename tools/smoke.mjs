@@ -239,12 +239,19 @@ for (const prof of PROFILES){
     await g(`for (const t of ['bomber', 'bomber', 'shield', 'shield', 'queen', 'clock']) spawnEnemy(t, player.x + rnd(-260, 260), player.y + rnd(-200, 200), false, true)`);
     await sleep(4000);
     await shot('11-bosses');
-    for (const [biome, hazard] of [['caves', 'resonator'], ['desert', 'quicksand']]){
+    for (const [biome, hazard] of [['caves', 'resonator'], ['desert', 'quicksand'], ['forge', 'gear']]){
       await g(`startRun(); RUN.biome = '${biome}'; chunks.clear(); groundPat = null; choosePact('swarm'); player.hp = player.maxHp = 1e9`);
       await sleep(2500);
       if (!(await g(`nearProps.some(h => h.kind === '${hazard}')`))) throw new Error(`в мире ${biome} нет опасности ${hazard}`);
       await shot(`12-${biome}`);
     }
+    // механизмы кузни: крипы и оба местных босса со всеми атаками
+    await g(`for (const t of ['cog', 'cog', 'smelter', 'drone', 'drone', 'smith', 'titan']) spawnEnemy(t, player.x + rnd(-260, 260), player.y + rnd(-200, 200), false, true);
+      for (const e of enemies) if (e.boss) e.cd = 1`);
+    await sleep(4000);
+    if (!(await g("bossPool().includes('smith') && !(RUN.biome = 'ice', bossPool()).includes('smith')"))) throw new Error('боссы кузни приходят не в своём мире');
+    await g("RUN.biome = 'forge'");
+    await shot('13-forge-bosses');
   });
   if (prof.name === 'desktop' || prof.name === 'phone-portrait') await step('новые руны: Рой, Град, Чума, Время, Дух, Звук, Магма и моды', async () => {
     const CASES = [

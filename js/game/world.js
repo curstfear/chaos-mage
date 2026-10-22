@@ -189,6 +189,20 @@ function hazards(){
         if (onLine(P.x, P.y, P.r + 10) && P.inv <= 0 && P.dash <= 0) hurt(14);
         if (pd < 800 && can('reso', 100)){ tone(1800, 0.25, { type: 'sawtooth', vol: 0.04, to: 400 }); tone(2400, 0.2, { vol: 0.03 }); }
       }
+    } else if (h.kind === 'gear'){
+      // шестерня-платформа крутится и везёт всех по кругу, зубцы по краю перемалывают
+      const w = 0.012 * (h.seed < 0.5 ? 1 : -1), c = Math.cos(w), s = Math.sin(w);
+      h.a = (h.a || 0) + w;
+      const spin = o => { const dx = o.x - h.x, dy = o.y - h.y; o.x = h.x + dx * c - dy * s; o.y = h.y + dx * s + dy * c; };
+      if (pd < h.r * 0.82) spin(P);
+      else if (pd < h.r * 1.05 && P.inv <= 0 && P.dash <= 0) hurt(6);
+      near(h.x, h.y, h.r * 1.05, (e, dx, dy) => {
+        if (e.static || e.boss) return;
+        const d = Math.hypot(dx, dy);
+        if (d < h.r * 0.82) spin(e);
+        else if (tick % 15 === 0) damage(e, 5 * hpScale(), '#ffb347', -1);
+      });
+      if (pd < 900 && Math.random() < 0.08){ const a = rnd(0, TAU); particles.push({ x: h.x + Math.cos(a) * h.r, y: h.y + Math.sin(a) * h.r, vx: rnd(-1.5, 1.5), vy: -rnd(1, 2.5), life: 20, max: 20, color: '#ffe08a', r: 2 }); }
     } else if (h.kind === 'quicksand'){
       // зыбучий песок: вязнешь, тебя тянет к центру, а в центре ранит
       if (pd < h.r){

@@ -190,6 +190,7 @@ function kill(e){
   e.dead = true;
   const src = e.lastSrc;
   if (e.type === 'bomber') bomberBlast(e, false);
+  if (e.type === 'smelter') for (let k = 0; k < 6; k++){ const a = k / 6 * TAU; ebullets.push({ x: e.x, y: e.y, vx: Math.cos(a) * 3, vy: Math.sin(a) * 3, life: 240, c: '#ff8a3d', pool: true }); }
   if (e.magmaT > 0) magmaBlast(e);
   if (e.plague > 0){
     const done = new Set([e]);

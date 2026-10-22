@@ -391,7 +391,9 @@ function update(){
         continue;
       }
     }
-    const sp = e.spd * (e.slow > 0 ? 0.45 : 1) * (e.iceT > 0 ? 0.6 : 1) * (e.wet > 0 ? 0.8 : 1) * (e.sand > 0 ? 0.55 : 1) * moonMul;
+    // шестерёнка время от времени разгоняется и катится к магу втрое быстрее
+    if (e.type === 'cog'){ if (e.roll > 0) e.roll--; else if (--e.cd <= 0 && d < 420){ e.cd = rnd(100, 160); e.roll = 30; } }
+    const sp = e.spd * (e.roll > 0 ? 3 : 1) * (e.slow > 0 ? 0.45 : 1) * (e.iceT > 0 ? 0.6 : 1) * (e.wet > 0 ? 0.8 : 1) * (e.sand > 0 ? 0.55 : 1) * moonMul;
     let ux = dx / d, uy = dy / d;
     // «Приманка» уводит обычных врагов за собой
     if (bait && !e.wild && e.type !== 'goblin'){
@@ -399,12 +401,19 @@ function update(){
       if (bd < bait.lure){ ux = bx / bd; uy = by / bd; }
     }
     if (e.type === 'shooter' && d < 260){ ux = -ux * 0.6; uy = -uy * 0.6; }
+    if (e.type === 'drone' && d < 240){ const t = ux; ux = -uy * e.side; uy = t * e.side; } // кружит вокруг мага
     if (e.type === 'goblin'){ ux = -ux + Math.sin(tick * 0.05 + e.wob) * 0.6; uy = -uy + Math.cos(tick * 0.05 + e.wob) * 0.6; if (--e.life <= 0 || d > 1500){ e.dead = true; banner('💨 Гоблин сбежал…', '#a99cc9'); continue; } }
     e.x += ux * sp; e.y += uy * sp;
     if (RUN.pact === 'wind' && !e.boss){ e.x += wind.x * 0.7; e.y += wind.y * 0.7; }
     // упёрся в постройку — обходим её боком
     if (!e.boss && pushOut(e, e.r * 0.8)){ e.x += -uy * sp * e.side; e.y += ux * sp * e.side; }
     e.moving = sp > 0;
+    if (e.type === 'drone' && --e.cd <= 0 && d < 420){
+      e.cd = 150; const a = Math.atan2(dy, dx);
+      for (const k of [-0.22, 0, 0.22]) ebullets.push({ x: e.x, y: e.y, vx: Math.cos(a + k) * 3.4, vy: Math.sin(a + k) * 3.4, life: 160, c: '#7fd0c0' });
+    }
+    // плавильщик роняет капли расплавленного металла — они лежат лужицами и жгут мага
+    if (e.type === 'smelter' && --e.cd <= 0){ e.cd = 80; if (ebullets.length < 300) ebullets.push({ x: e.x, y: e.y + e.r * 0.5, vx: 0, vy: 0, life: 300, c: '#ff8a3d', pool: true }); }
     if (e.type === 'shooter' && --e.cd <= 0){ e.cd = Math.max(80, 140 - tick / 60 / 6); ebullets.push({ x: e.x, y: e.y, vx: dx / d * 3.6, vy: dy / d * 3.6, life: 200 }); }
     if (d > 1600 && e.type !== 'goblin'){ const a = rnd(0, TAU), r = Math.hypot(W, H) / 2 + 60; e.x = P.x + Math.cos(a) * r; e.y = P.y + Math.sin(a) * r; }
     if (e.dmg > 0 && d < e.r + P.r && P.inv <= 0) hurt(e.dmg * (moonT > 0 ? 1.3 : 1) * (goldT > 0 ? 1.5 : 1));
@@ -425,6 +434,15 @@ function update(){
   for (const b of ebullets){
     // пули Часовщика сначала висят в воздухе, потом летят
     if (b.wait > 0) b.wait--; else { b.x += b.vx; b.y += b.vy; }
+    if (b.pool){ b.vx *= 0.9; b.vy *= 0.9; }
+    // ракеты Парового титана доворачивают к магу, пока не выгорит топливо
+    if (b.home > 0){
+      b.home--;
+      const cur = Math.atan2(b.vy, b.vx), sp = Math.min(5, Math.hypot(b.vx, b.vy) + 0.03);
+      let da = Math.atan2(P.y - b.y, P.x - b.x) - cur; da = Math.atan2(Math.sin(da), Math.cos(da));
+      const na = cur + clamp(da, -0.06, 0.06); b.vx = Math.cos(na) * sp; b.vy = Math.sin(na) * sp;
+      if (tick % 3 === 0) particles.push({ x: b.x, y: b.y, vx: 0, vy: 0, life: 18, max: 18, color: '#a8a0a0', r: 3 });
+    }
     b.life--;
     if (solidAt(b.x, b.y, 3)){ b.life = 0; burst(b.x, b.y, 4, '#ff3d6e', 2); continue; }
     if (Math.hypot(b.x - P.x, b.y - P.y) < P.r + 5 && P.inv <= 0){ hurt((goldT > 0 ? 15 : 10) * dmgScale()); b.life = 0; }

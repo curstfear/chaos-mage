@@ -16,9 +16,20 @@ const ETYPES = {
   shield:  { r: 17, hp: 70,  spd: 0.9,  dmg: 12, xp: 4,  color: '#c8d2e0', sc: 2 },
   wasp:    { r: 8,  hp: 7,   spd: 2.9,  dmg: 5,  xp: 1,  color: '#ffd23a', sc: 1.8 }, // свита Королевы роя
   crystal: { r: 16, hp: 35,  spd: 0,    dmg: 0,  xp: 4,  color: '#ffffff', sc: 2 },
-  goblin:  { r: 14, hp: 260, spd: 2.5,  dmg: 0,  xp: 40, color: '#ffd700', sc: 2 }
+  goblin:  { r: 14, hp: 260, spd: 2.5,  dmg: 0,  xp: 40, color: '#ffd700', sc: 2 },
+  // механизмы Ржавой кузни: шестерёнка катится рывками, плавильщик оставляет лужи металла, дрон кружит и стреляет искрами
+  cog:     { r: 12, hp: 16,  spd: 1.2,  dmg: 7,  xp: 1,  color: '#c8a050', sc: 1.6 },
+  smelter: { r: 22, hp: 90,  spd: 0.7,  dmg: 14, xp: 4,  color: '#ff8a3d', sc: 2.2 },
+  drone:   { r: 12, hp: 26,  spd: 1.6,  dmg: 6,  xp: 2,  color: '#7fd0c0', sc: 1.5 },
+  smith:   { r: 52, hp: 1400, spd: 0.7, dmg: 34, xp: 75, color: '#ff8a3d', sc: 3, boss: true, biome: 'forge', name: 'Мастер кузни' },
+  titan:   { r: 58, hp: 1600, spd: 0.55, dmg: 36, xp: 80, color: '#7fd0c0', sc: 3, boss: true, biome: 'forge', name: 'Паровой титан' }
 };
+// боссы с полем biome приходят только в своём мире
 const BOSSES = Object.keys(ETYPES).filter(k => ETYPES[k].boss);
+const bossPool = () => BOSSES.filter(b => !ETYPES[b].biome || ETYPES[b].biome === RUN.biome);
+// местные враги мира: в половине случаев заменяют обычных
+const BIOME_CREEPS = { forge: { slime: 'cog', runner: 'cog', brute: 'smelter', shooter: 'drone' } };
+const ANVIL_R = 70; // радиус удара наковальни Мастера кузни
 // враги крепнут всё быстрее: линейно плюс квадратичный довесок к концу забега
 // после 5-й минуты враги крепчают заметно быстрее, чтобы сильный билд не превращал забег в прогулку:
 // после 3-й минуты здоровье врагов растёт ещё на 1/4 за каждую минуту, после 5-й — ещё и квадратично
@@ -57,19 +68,23 @@ function spawner(){
   if (tick % every === 0){
     const n = 1 + Math.floor(sec / 45);
     const eliteCh = sec > 120 ? Math.min(0.08, 0.015 + (sec - 120) / 15000) : 0;
+    const sub = BIOME_CREEPS[RUN.biome];
     for (let k = 0; k < n; k++){
       const r = Math.random();
-      spawnEnemy(sec > 60 && r < 0.1 ? 'brute' : sec > 90 && r < 0.2 ? 'shooter' : sec > 150 && r < 0.27 ? 'bomber'
-                 : sec > 200 && r < 0.33 ? 'shield' : sec > 20 && r < 0.5 ? 'runner' : 'slime',
-                 undefined, undefined, Math.random() < eliteCh);
+      let t = sec > 60 && r < 0.1 ? 'brute' : sec > 90 && r < 0.2 ? 'shooter' : sec > 150 && r < 0.27 ? 'bomber'
+            : sec > 200 && r < 0.33 ? 'shield' : sec > 20 && r < 0.5 ? 'runner' : 'slime';
+      if (sub && sub[t] && Math.random() < 0.5) t = sub[t];
+      spawnEnemy(t, undefined, undefined, Math.random() < eliteCh);
     }
   }
   // боссы приходят раз в 90 с, после 8 минуты — по двое
   if (++bossTimer >= 60 * 90){
     bossTimer = 0; bossCount++;
-    const first = bossCount === 1 ? 'boss' : pick(BOSSES.filter(b => b !== lastBoss));
+    // в мире со своими боссами первым приходит местный, и дальше местные выпадают вдвое чаще
+    const pool = bossPool(), own = pool.filter(b => ETYPES[b].biome), weighted = [...pool, ...own];
+    const first = bossCount === 1 ? (own.length ? pick(own) : 'boss') : pick(weighted.filter(b => b !== lastBoss));
     const list = [first];
-    if (sec > 480) list.push(pick(BOSSES.filter(b => b !== first)));
+    if (sec > 480) list.push(pick(pool.filter(b => b !== first)));
     for (const b of list) spawnEnemy(b);
     lastBoss = first;
     banner('👑 ИДЁТ БОСС: ' + list.map(b => ETYPES[b].name).join(' и ') + '!', '#ff2e4d'); shake = 8; sfx.boss();
@@ -165,6 +180,49 @@ function bossAttack(e, dx, dy, d){
       e.hp = Math.min(e.maxHp, e.hp + e.maxHp * 0.04);
       burst(e.x, e.y, 24, '#7fe8ff', 5); ring(e.x, e.y, 80, '#7fe8ff'); tone(1200, 0.4, { vol: 0.04, to: 300 });
     } else e.cd = 20;
+  } else if (e.type === 'smith'){
+    // швыряет наковальни (метка на земле, через секунду удар), бьёт молотом кольцом искр, зовёт шестерёнок
+    e.drops = e.drops || [];
+    for (const a of e.drops) if (--a.t === 0){
+      ring(a.x, a.y, ANVIL_R, '#ff8a3d'); burst(a.x, a.y, 24, '#ffb347', 6); burst(a.x, a.y, 10, '#5a5a6a', 4);
+      shake = Math.max(shake, 6); sfx.boom(ANVIL_R);
+      if (Math.hypot(P.x - a.x, P.y - a.y) < ANVIL_R && P.inv <= 0 && P.dash <= 0) hurt(e.dmg * 0.7);
+    }
+    e.drops = e.drops.filter(a => a.t > 0);
+    if (--e.cd > 0) return;
+    e.cd = 170;
+    const r = Math.random();
+    if (r < 0.45){
+      // первая летит туда, куда маг бежит, остальные — рядом
+      for (let k = 0; k < 3; k++) e.drops.push({ x: P.x + (k ? rnd(-130, 130) : P.vx * 40), y: P.y + (k ? rnd(-100, 100) : P.vy * 40), t: 60 + k * 14, max: 60 + k * 14 });
+      tone(200, 0.3, { type: 'square', vol: 0.04, to: 500 });
+    } else if (r < 0.8){
+      for (let k = 0; k < 20; k++){ shoot(k / 20 * TAU, 3, '#ffb347'); shoot(k / 20 * TAU + TAU / 40, 2.1, '#ff7a2e'); }
+      ring(e.x, e.y, 90, '#ffb347'); shake = Math.max(shake, 7); sfx.boom(110);
+    } else for (let k = 0; k < 5; k++) spawnEnemy('cog', e.x + rnd(-50, 50), e.y + rnd(-50, 50), false, true);
+  } else if (e.type === 'titan'){
+    // самонаводящиеся ракеты, паровой выброс отбрасывает мага, призыв дронов
+    if (e.phase > 0){
+      e.phase--;
+      if (d < 300){ P.x += dx / d * 5; P.y += dy / d * 5; }
+      if (tick % 2 === 0) particles.push({ x: e.x + rnd(-30, 30), y: e.y + rnd(-20, 20), vx: dx / d * 4 + rnd(-1, 1), vy: dy / d * 4 + rnd(-1, 1), life: 30, max: 30, color: '#e8f0f0', r: rnd(3, 6) });
+      return;
+    }
+    if (--e.cd > 0) return;
+    e.cd = 160;
+    const r = Math.random();
+    if (r < 0.45){
+      for (let k = 0; k < 4; k++){
+        const a = ang + Math.PI + (k - 1.5) * 0.7; // вылетают назад из-за спины и разворачиваются к магу
+        ebullets.push({ x: e.x, y: e.y - 30, vx: Math.cos(a) * 3, vy: Math.sin(a) * 3, life: 300, c: '#ffb347', home: 90 + k * 10 });
+      }
+      tone(500, 0.3, { type: 'sawtooth', vol: 0.04, to: 900 });
+    } else if (r < 0.8){
+      // пар: отбрасывает тех, кто подошёл близко, и расходится кольцом медленных клубов
+      if (d < 300) e.phase = 24;
+      for (let k = 0; k < 14; k++) shoot(k / 14 * TAU, 1.8, '#e8f0f0', 200);
+      ring(e.x, e.y, 300, '#e8f0f0'); sfx.gust();
+    } else { for (let k = 0; k < 3; k++) spawnEnemy('drone', e.x + rnd(-60, 60), e.y + rnd(-60, 60), false, true); ring(e.x, e.y, 80, '#7fd0c0'); }
   } else if (e.type === 'reaper'){
     // веер прицельных серпов, иногда рывок сквозь мага
     if (e.phase > 0){ e.phase--; e.x += e.jx; e.y += e.jy; return; }

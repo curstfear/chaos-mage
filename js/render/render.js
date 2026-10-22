@@ -87,6 +87,28 @@ function drawProp(h){
       ctx.fillStyle = c; ctx.beginPath(); ctx.moveTo(h.x + ox, h.y - hh); ctx.lineTo(h.x + ox - w, h.y); ctx.lineTo(h.x + ox + w, h.y); ctx.fill();
       ctx.fillStyle = d; ctx.beginPath(); ctx.moveTo(h.x + ox, h.y - hh); ctx.lineTo(h.x + ox, h.y); ctx.lineTo(h.x + ox + w, h.y); ctx.fill();
     }
+  } else if (h.kind === 'gear'){
+    // плоская шестерня в полу: зубцы по краю раскалены, в центре тлеет ступица
+    ctx.save(); ctx.translate(h.x, h.y); ctx.rotate(h.a || 0);
+    const n = Math.max(10, Math.round(h.r / 7)), tw = TAU / n * h.r * 0.45;
+    for (let k = 0; k < n; k++){
+      ctx.save(); ctx.rotate(k / n * TAU);
+      ctx.fillStyle = '#0e0820'; ctx.fillRect(h.r * 0.78, -tw / 2 - 2, h.r * 0.3 + 2, tw + 4);
+      ctx.fillStyle = '#6e5c54'; ctx.fillRect(h.r * 0.78, -tw / 2, h.r * 0.27, tw);
+      ctx.fillStyle = '#ff8a3d'; ctx.fillRect(h.r * 0.98, -tw / 2, h.r * 0.07, tw);
+      ctx.restore();
+    }
+    ctx.fillStyle = '#0e0820'; ctx.beginPath(); ctx.arc(0, 0, h.r * 0.84, 0, TAU); ctx.fill();
+    ctx.fillStyle = '#4a3e3a'; ctx.beginPath(); ctx.arc(0, 0, h.r * 0.81, 0, TAU); ctx.fill();
+    ctx.strokeStyle = '#2e2622'; ctx.lineWidth = 4;
+    for (let k = 0; k < 4; k++){ ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(Math.cos(k * TAU / 4) * h.r * 0.75, Math.sin(k * TAU / 4) * h.r * 0.75); ctx.stroke(); }
+    ctx.strokeStyle = '#6e5c54'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(0, 0, h.r * 0.66, 0, TAU); ctx.stroke();
+    ctx.fillStyle = '#c8a050';
+    for (let k = 0; k < 8; k++){ const a = k / 8 * TAU + 0.4; ctx.fillRect(Math.cos(a) * h.r * 0.73 - 2, Math.sin(a) * h.r * 0.73 - 2, 4, 4); }
+    ctx.restore();
+    ctx.globalAlpha = 0.5 + 0.15 * Math.sin(tick * 0.07 + h.seed * 9); ctx.drawImage(glow('#ff8a3d'), h.x - 26, h.y - 26, 52, 52); ctx.globalAlpha = 1;
+    ctx.fillStyle = '#2e2622'; ctx.beginPath(); ctx.arc(h.x, h.y, 13, 0, TAU); ctx.fill();
+    ctx.fillStyle = '#ffb347'; ctx.beginPath(); ctx.arc(h.x, h.y, 6, 0, TAU); ctx.fill();
   } else if (h.kind === 'quicksand'){
     ctx.save(); ctx.translate(h.x, h.y); ctx.scale(1, 0.62);
     ctx.fillStyle = 'rgba(120,80,40,.35)'; ctx.beginPath(); ctx.arc(0, 0, h.r, 0, TAU); ctx.fill();
@@ -163,7 +185,7 @@ function drawEnemy(e){
     img = fr[Math.floor(tick * spd + e.wob * 3) % fr.length];
   }
   const w = img.width * sc, h = img.height * sc;
-  const float = e.type === 'shooter' || e.type === 'runner' || e.type === 'wasp' ? Math.sin(tick * 0.08 + e.wob) * 3 - 8
+  const float = e.type === 'shooter' || e.type === 'runner' || e.type === 'wasp' || e.type === 'drone' ? Math.sin(tick * 0.08 + e.wob) * 3 - 8
               : e.type === 'lich' || e.type === 'reaper' || e.type === 'queen' || e.type === 'clock' ? Math.sin(tick * 0.06 + e.wob) * 5 - 14 : -(e.hop || 0);
   shadow(e.x, e.y + e.r * 0.75, w * 0.36);
   if (e.elite){ ctx.globalAlpha = 0.5 + 0.2 * Math.sin(tick * 0.2); ctx.drawImage(glow('#ffd25a'), e.x - w * 0.8, e.y - h * 0.8 + float, w * 1.6, h * 1.6); ctx.globalAlpha = 1; }
@@ -179,6 +201,7 @@ function drawEnemy(e){
   ctx.save(); ctx.translate(e.x, e.y + float);
   if (flip) ctx.scale(-1, 1);
   if (e.fly > 0) ctx.rotate(e.fly * 0.5); // «Бильярд»: враг кувыркается в полёте
+  else if (e.type === 'cog') ctx.rotate(tick * (e.roll > 0 ? 0.35 : 0.08) + e.wob);
   if (e.type === 'reaper') ctx.globalAlpha = 0.75 + 0.2 * Math.sin(tick * 0.1);
   ctx.drawImage(img, -w / 2, -h / 2 - (e.static ? 6 : 0), w, h);
   ctx.restore();
@@ -201,7 +224,7 @@ function drawEnemy(e){
     ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(e.x, e.y, e.r + 8, -Math.PI / 2, -Math.PI / 2 + e.debt.t / 180 * TAU); ctx.stroke();
   }
   if (e.mark > 0){ ctx.strokeStyle = '#ff4fd8'; ctx.lineWidth = 2; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.arc(e.x, e.y, e.r + 6, 0, TAU); ctx.stroke(); ctx.setLineDash([]); }
-  if (e.hp < e.maxHp && (e.type === 'brute' || e.type === 'shield' || e.boss || e.type === 'shooter' || e.type === 'goblin' || e.elite || e.static || e.wild)){
+  if (e.hp < e.maxHp && (e.type === 'brute' || e.type === 'shield' || e.type === 'smelter' || e.boss || e.type === 'shooter' || e.type === 'goblin' || e.elite || e.static || e.wild)){
     const bw = Math.max(30, e.r * 2), y = e.y - h / 2 - 10 + float;
     ctx.fillStyle = '#0b0618'; ctx.fillRect(e.x - bw / 2 - 2, y - 2, bw + 4, 8);
     ctx.fillStyle = '#3a1a2a'; ctx.fillRect(e.x - bw / 2, y, bw, 4);
@@ -398,7 +421,7 @@ function drawDarkness(ox, oy){
   for (let i = 0; i < projs.length; i += Math.max(1, projs.length / 120 | 0)) light(projs[i].x, projs[i].y, 60);
   for (const p of particles) if (p.ring) light(p.x, p.y, p.r * 1.4);
   for (const b of beams) light((b.x1 + b.x2) / 2, (b.y1 + b.y2) / 2, 160);
-  for (const h of nearProps) if (h.kind === 'lava' || h.kind === 'altar' || h.kind === 'shrine' || h.kind === 'resonator') light(h.x, h.y, h.kind === 'lava' ? h.r * 1.3 : 70);
+  for (const h of nearProps) if (h.kind === 'lava' || h.kind === 'altar' || h.kind === 'shrine' || h.kind === 'resonator' || h.kind === 'gear') light(h.x, h.y, h.kind === 'lava' ? h.r * 1.3 : 70);
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.drawImage(dark, 0, 0);
   // в темноте видны только злые глазки
@@ -542,8 +565,30 @@ function render(){
     else if (t === 8) drawStandProj(o);
     else drawPlayer();
   }
+  // наковальни Мастера кузни: метка на земле сжимается, сверху падает наковальня
+  for (const e of enemies) if (e.drops) for (const a of e.drops){
+    const k = a.t / a.max;
+    ctx.fillStyle = `rgba(255,90,40,${0.12 + (1 - k) * 0.2})`; ctx.beginPath(); ctx.ellipse(a.x, a.y, ANVIL_R, ANVIL_R * 0.7, 0, 0, TAU); ctx.fill();
+    ctx.strokeStyle = '#ff5a2e'; ctx.lineWidth = 3; ctx.setLineDash([10, 8]);
+    ctx.beginPath(); ctx.ellipse(a.x, a.y, ANVIL_R, ANVIL_R * 0.7, 0, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
+    if (k < 0.6){
+      const y = a.y - 22 - k / 0.6 * 380;
+      ctx.fillStyle = '#0e0820'; ctx.fillRect(a.x - 27, y - 17, 54, 30);
+      ctx.fillStyle = '#5a5a6a'; ctx.fillRect(a.x - 25, y - 15, 50, 9); ctx.fillRect(a.x - 12, y - 6, 24, 9); ctx.fillRect(a.x - 18, y + 3, 36, 8);
+      ctx.fillStyle = '#9a9aaa'; ctx.fillRect(a.x - 25, y - 15, 50, 2);
+    }
+  }
   for (const b of ebullets){
     if (b.wait > 0 && tick % 10 < 5) continue; // застывшие пули Часовщика мигают
+    if (b.pool){
+      // лужица расплавленного металла остывает к концу жизни
+      const k = Math.min(1, b.life / 60);
+      ctx.globalAlpha = 0.5 * k; ctx.drawImage(glow('#ff8a3d'), b.x - 18, b.y - 14, 36, 28); ctx.globalAlpha = 1;
+      ctx.fillStyle = '#3a1a0a'; ctx.beginPath(); ctx.ellipse(b.x, b.y, 11, 7, 0, 0, TAU); ctx.fill();
+      ctx.fillStyle = k > 0.5 ? '#ff8a3d' : '#a8502a'; ctx.beginPath(); ctx.ellipse(b.x, b.y, 8, 5, 0, 0, TAU); ctx.fill();
+      ctx.fillStyle = '#ffe08a'; ctx.fillRect(b.x - 3, b.y - 2, 3, 2);
+      continue;
+    }
     ctx.globalAlpha = 0.7; ctx.drawImage(glow(b.c || '#ff3d6e'), b.x - 14, b.y - 14, 28, 28); ctx.globalAlpha = 1;
     ctx.fillStyle = '#0b0618'; ctx.fillRect(b.x - 5, b.y - 5, 10, 10);
     ctx.fillStyle = '#ffd0dc'; ctx.fillRect(b.x - 3, b.y - 3, 6, 6);
