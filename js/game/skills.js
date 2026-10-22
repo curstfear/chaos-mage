@@ -65,7 +65,7 @@ function cast(i, ox, oy, ang, depth, isEcho, Sover){
       case 'meteor': {
         const n = 1 + S.multi;
         for (let k = 0; k < n; k++)
-          meteors.push({ ...base, x: tx + (k ? rnd(-90, 90) : 0), y: ty + (k ? rnd(-90, 90) : 0), t: 38 + k * 7, max: 38 + k * 7, rad: 95 * S.size });
+          meteors.push({ ...base, x: tx + (k ? rnd(-90, 90) : 0), y: ty + (k ? rnd(-90, 90) : 0), t: 38 + k * 7, max: 38 + k * 7, rad: 85 * S.size });
       } break;
       case 'beam': {
         const n = 1 + S.multi;

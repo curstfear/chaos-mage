@@ -138,7 +138,7 @@ function destroySolid(s){
   shake = Math.min(10, shake + 4);
   sfx.crumble();
   for (let k = 0; k < 3; k++) gems.push({ x: s.x + rnd(-30, 30), y: s.y + rnd(-10, 10), v: 2, kind: 'xp' });
-  if (Math.random() < 0.04 * PACT.rune * (hasPet('toad') ? 1.5 : 1) * runeLate()) dropRune(s.x, s.y, randomRune([...ELS, ...MODS]));
+  if (Math.random() < 0.025 * PACT.rune * (hasPet('toad') ? 1.5 : 1) * runeLate()) dropRune(s.x, s.y, randomRune([...ELS, ...MODS]));
   if (destroyed >= 20) unlockSet('pirate');
 }
 // урон по постройкам в круге (взрывы, молнии, смерчи)

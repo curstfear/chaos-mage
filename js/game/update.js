@@ -17,7 +17,7 @@ function update(){
   if (RUN.pact === 'wind'){ P.x += wind.x * 0.9; P.y += wind.y * 0.9; }
   if (pushOut(P, P.r * 0.8) && P.dash > 0) sfx.thud();
   if (P.dashCd > 0) P.dashCd--; if (P.inv > 0) P.inv--;
-  if (RUN.pact === 'vampire') P.hp -= 1.2 / 60; else P.hp = Math.min(P.maxHp, P.hp + 0.012 + PACT.regen / 60);
+  if (RUN.pact === 'vampire') P.hp -= 1.2 / 60; else P.hp = Math.min(P.maxHp, P.hp + 0.006 + PACT.regen / 60);
   if (TOUCH) updateAutoAim();
   const [ax, ay] = aimWorld(); P.face = Math.atan2(ay - P.y, ax - P.x);
   // путь мага за последние 2 с — по нему идёт «Тень»
@@ -429,7 +429,7 @@ function update(){
     if (d < (hasPet('toad') ? 300 : 140) * PACT.magnet || g.pull){ g.pull = true; g.ps = (g.ps || 0) + 0.4; const s = Math.min(14, 3 + g.ps); g.x += dx / d * s; g.y += dy / d * s; }
     if (d < P.r + 10){
       g.taken = true;
-      if (g.kind === 'heart'){ const h = Math.round(20 * PACT.heal); P.hp = Math.min(P.maxHp, P.hp + h); banner(`+${h} ❤️`, '#ff5a7a'); sfx.rune(); }
+      if (g.kind === 'heart'){ const h = Math.round(12 * PACT.heal); P.hp = Math.min(P.maxHp, P.hp + h); banner(`+${h} ❤️`, '#ff5a7a'); sfx.rune(); }
       else if (g.kind === 'feather'){ hasFeather = true; banner('🪶 Перо феникса! Если погибнешь — возродишься', '#ff8a3d'); sfx.rune(); }
       else if (g.kind === 'rune' && g.chain){
         inventory.push(g.r); sfx.chain(); flash = Math.max(flash, 0.5);

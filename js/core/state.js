@@ -30,7 +30,7 @@ function newGame(){
   toadTimer = Math.round(60 * rnd(200, 260)); wildTimer = Math.round(60 * rnd(140, 180));
   slots = Array.from({ length: NSLOTS }, () => ({ form: null, element: null, mods: [null, null, null] }));
   slots[0].form = 'bolt';
-  inventory = [pick(ELS), pick(MODS.filter(m => m !== 'wild' && m !== 'resonance'))];
+  inventory = [pick(ELS)]; // на старте только стихия: модификаторы придётся найти
   slotDmg = new Array(NSLOTS).fill(0); cds = new Array(NSLOTS).fill(20);
   tick = 0; kills = 0; score = 0; combo = 0; comboTimer = 0; bestCombo = 0; level = 1; xp = 0; shake = 0; bossTimer = 0; bossCount = 0; lastBoss = 'boss'; pendingLevels = 0;
   evTimer = 60 * 60; ev = null; moonT = 0; wind = { x: 1, y: 0 };

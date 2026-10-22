@@ -9,8 +9,8 @@ function dropRune(x, y, r){
   }
   gems.push(g);
 }
-// случайная руна с чуть повышенным шансом «Цепи» (~5% вместо ~2.5%)
-const randomRune = list => Math.random() < 0.025 ? 'trigger' : pick(list);
+// случайная руна; «Цепь» выпадает редко (~1.2%), из-за неё и строятся самые сильные комбо
+const randomRune = list => Math.random() < 0.012 ? 'trigger' : pick(list);
 let shareLock = false; // чтобы урон по «Привязи» не гонялся туда-обратно бесконечно
 function damage(e, amt, color, slot, crit){
   if (e.dead) return;
@@ -55,9 +55,9 @@ function hitEnemy(e, src, dmg, x, y){
   if (src.mark) e.mark = 240;
   e.lastSrc = src;
   damage(e, d, src.color, src.slot, crit);
-  if (src.vampiric) player.hp = Math.min(player.maxHp, player.hp + Math.min(2, d * 0.03 * src.vampiric));
+  if (src.vampiric) player.hp = Math.min(player.maxHp, player.hp + Math.min(1, d * 0.015 * src.vampiric));
   // масти «Колоды»
-  if (src.card === 'heart') player.hp = Math.min(player.maxHp, player.hp + 0.6);
+  if (src.card === 'heart') player.hp = Math.min(player.maxHp, player.hp + 0.3);
   else if (src.card === 'diamond') gainXp(0.3 * PACT.xp);
   if (e.dead) return;
   if (src.card === 'club' && !e.boss && !e.static){ e.slow = Math.max(e.slow, 90); if (Math.random() < 0.35) e.stunT = Math.max(e.stunT || 0, 30); }
@@ -188,8 +188,8 @@ function kill(e){
   const xpv = e.xp * PACT.xp * (moonT > 0 ? 3 : 1) * (goldT > 0 ? 2 : 1) * (src && src.el === 'gold' ? 2 : 1);
   if (gems.length < 500) gems.push({ x: e.x, y: e.y, v: xpv, kind: e.xp >= 4 ? 'big' : 'xp' });
   else gainXp(xpv);
-  if (!e.static && Math.random() < 0.012) gems.push({ x: e.x + 10, y: e.y, kind: 'heart' });
-  let runeCh = e.static ? 0.06 : e.elite ? 0.15 : 0.001;
+  if (!e.static && Math.random() < 0.008) gems.push({ x: e.x + 10, y: e.y, kind: 'heart' });
+  let runeCh = e.static ? 0.035 : e.elite ? 0.09 : 0.0006;
   runeCh *= PACT.rune * (hasPet('toad') ? 1.5 : 1) * runeLate();
   if (src && src.el === 'gold') runeCh += 0.01;
   const nr = e.type === 'goblin' ? 2 : e.boss ? 1 : Math.random() < runeCh ? 1 : 0;
@@ -219,7 +219,7 @@ function kill(e){
       }
     }
   }
-  if (RUN.pact === 'vampire' && !e.static) player.hp = Math.min(player.maxHp, player.hp + 1.5);
+  if (RUN.pact === 'vampire' && !e.static) player.hp = Math.min(player.maxHp, player.hp + 0.8);
   if (RUN.pact === 'wild' && !e.static && Math.random() < 0.05) wildCast(e.x, e.y);
 }
 // каждые 200 комбо — одна руна рядом с магом, но не чаще раза в 45 с

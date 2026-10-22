@@ -1,6 +1,6 @@
 // ---------- питомцы ----------
 const PETS = {
-  healer:  { name: 'Слизняш-лекарь',    icon: '💚', desc: 'каждые 6 с лечит тебя на 8 ❤️',                        how: 'оглуши дикого слизня 🐾 и постой рядом 3 с' },
+  healer:  { name: 'Слизняш-лекарь',    icon: '💚', desc: 'каждые 6 с лечит тебя на 5 ❤️',                        how: 'оглуши дикого слизня 🐾 и постой рядом 3 с' },
   guard:   { name: 'Огр-телохранитель', icon: '🛡️', desc: '−25% урона по тебе, лупит врагов рядом',               how: 'оглуши дикого огра 🐾 и постой рядом 3 с' },
   dragon:  { name: 'Драконыш',           icon: '🐉', desc: 'плюётся огнём, огонь +15%',                           how: 'найди гнездо 🥚 и высиди яйцо 12 с, отбиваясь от стаи' },
   toad:    { name: 'Жаба удачи',         icon: '🐸', desc: 'руны чаще ×1.5, опыт тянется издалека',                how: 'поймай золотую жабу — только рывком (Пробел)' },
@@ -22,11 +22,11 @@ function petsTick(){
     const idx = Math.min(trail.length / 2 - 1, 14 + i * 13) | 0;
     const tx = trail[idx * 2], ty = trail[idx * 2 + 1], ox = p.x;
     p.x += (tx - p.x) * 0.12; p.y += (ty - p.y) * 0.12; p.vx = p.x - ox;
-    if (p.id === 'phoenix') P.hp = Math.min(P.maxHp, P.hp + 1 / 60);
+    if (p.id === 'phoenix') P.hp = Math.min(P.maxHp, P.hp + 0.6 / 60);
     if (--p.cd > 0) return;
     if (p.id === 'healer'){
       p.cd = 360;
-      if (P.hp < P.maxHp){ P.hp = Math.min(P.maxHp, P.hp + 8); nums.push({ x: P.x, y: P.y - 34, v: '+8 ❤️', t: 50, color: '#7dff9a', crit: true }); ring(P.x, P.y, 46, '#7dff9a'); }
+      if (P.hp < P.maxHp){ P.hp = Math.min(P.maxHp, P.hp + 5); nums.push({ x: P.x, y: P.y - 34, v: '+5 ❤️', t: 50, color: '#7dff9a', crit: true }); ring(P.x, P.y, 46, '#7dff9a'); }
     } else if (p.id === 'guard'){
       const t = nearest(p.x, p.y, 110);
       if (!t){ p.cd = 10; return; }

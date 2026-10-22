@@ -106,7 +106,7 @@ for (const prof of PROFILES){
     await press('#buyBtn');
     if (await g('upLvl("might")') !== 1) throw new Error('не купилось');
     if (await g('META.shards') !== 485) throw new Error('осколки: ' + await g('META.shards'));
-    if (Math.abs(await g('pactStats(null).dmg') - 1.06) > 1e-9) throw new Error('бонус не применился');
+    if (Math.abs(await g('pactStats(null).dmg') - 0.85 * 1.06) > 1e-9) throw new Error('бонус не применился');
     await press('.node[data-u=heart]'); // закрытый навык: купить нельзя
     if (!(await g("$('buyBtn').disabled"))) throw new Error('закрытый навык можно купить');
     await press('#treeClose');
