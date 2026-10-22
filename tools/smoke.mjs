@@ -19,7 +19,8 @@ if (!CHROME){ console.error('Не нашёл Chrome — укажи путь в C
 const PROFILES = [
   { name: 'desktop', viewport: { width: 1366, height: 768 } },
   { name: 'phone-landscape', viewport: { width: 844, height: 390, deviceScaleFactor: 3, isMobile: true, hasTouch: true, isLandscape: true } },
-  { name: 'phone-portrait', viewport: { width: 390, height: 844, deviceScaleFactor: 3, isMobile: true, hasTouch: true } }
+  { name: 'phone-portrait', viewport: { width: 390, height: 844, deviceScaleFactor: 3, isMobile: true, hasTouch: true } },
+  { name: 'phone-small', viewport: { width: 375, height: 667, deviceScaleFactor: 2, isMobile: true, hasTouch: true } }
 ];
 const IPHONE_UA = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1';
 
@@ -38,7 +39,26 @@ for (const prof of PROFILES){
   page.on('console', m => { if (m.type() === 'error' && !/fonts\.(googleapis|gstatic)/.test(m.text())) errors.push(m.text()); });
   const touch = !!prof.viewport.hasTouch;
   const g = expr => page.evaluate(expr); // игровые переменные — глобальные, достаём их напрямую
-  const shot = name => page.screenshot({ path: `${OUT}/${prof.name}-${name}.png` });
+  // вёрстка: страница не прокручена и не увеличена, видимые элементы не вылезают за края экрана
+  const layoutCheck = () => page.evaluate(() => {
+    const bad = [];
+    if (scrollX || scrollY) bad.push(`страница прокручена на ${scrollX},${scrollY}`);
+    if (visualViewport && visualViewport.scale !== 1) bad.push(`зум ${visualViewport.scale}`);
+    const de = document.documentElement;
+    if (de.scrollWidth > innerWidth || de.scrollHeight > innerHeight) bad.push(`страница ${de.scrollWidth}×${de.scrollHeight} больше экрана`);
+    for (const el of document.querySelectorAll('body *')){
+      if (!el.checkVisibility || !el.checkVisibility({ visibilityProperty: true })) continue;
+      if (el.closest('.box') && !el.matches('.box')) continue; // внутри окна прокрутка разрешена
+      const r = el.getBoundingClientRect();
+      if (r.width && (r.left < -2 || r.right > innerWidth + 2)) bad.push(`${el.tagName.toLowerCase()}${el.id ? '#' + el.id : ''}.${el.className} вылезает: ${r.left | 0}…${r.right | 0}`);
+    }
+    return bad;
+  });
+  const shot = async name => {
+    await page.screenshot({ path: `${OUT}/${prof.name}-${name}.png` });
+    const bad = await layoutCheck();
+    if (bad.length) throw new Error(`вёрстка на «${name}»: ` + bad.slice(0, 5).join('; '));
+  };
   const press = async sel => {
     const el = await page.waitForSelector(sel, { visible: true, timeout: 3000 });
     if (touch) await el.tap(); else await el.click();
@@ -81,6 +101,17 @@ for (const prof of PROFILES){
     }
     const dx = await g('player.x') - x0;
     if (dx < 50) throw new Error('сместился только на ' + dx.toFixed(1));
+  });
+  if (touch) await step('свайпы не двигают страницу', async () => {
+    const { width: w, height: h } = prof.viewport;
+    // по игре, по HUD сверху и от края экрана — во все стороны (мимо экранных кнопок справа)
+    for (const [x0, y0, x1, y1] of [[w * 0.62, h * 0.5, w * 0.1, h * 0.5], [w * 0.5, 20, w * 0.5, h * 0.9], [w * 0.3, h * 0.9, w * 0.3, 10], [2, h * 0.5, w * 0.8, h * 0.5]]){
+      await page.touchscreen.touchStart(x0, y0);
+      for (let k = 1; k <= 8; k++) await page.touchscreen.touchMove(x0 + (x1 - x0) * k / 8, y0 + (y1 - y0) * k / 8);
+      await page.touchscreen.touchEnd();
+    }
+    const bad = await layoutCheck();
+    if (bad.length) throw new Error(bad.join('; '));
   });
   await step('рывок', async () => {
     if (touch) await page.touchscreen.tap(prof.viewport.width * 0.8, prof.viewport.height * 0.4);

@@ -66,6 +66,17 @@ function resetTouch(){
   showStick(null);
 }
 
+// защита страницы от жестов браузера: на iPhone CSS touch-action помогает не везде,
+// поэтому глушим отскок, щипок, двойной тап и меню долгого нажатия ещё и здесь.
+// Прокрутку пропускаем только внутри окна, если ему действительно есть куда прокручиваться.
+document.addEventListener('touchmove', e => {
+  const box = e.target.closest && e.target.closest('.box');
+  if (e.cancelable && (!box || box.scrollHeight <= box.clientHeight)) e.preventDefault();
+}, { passive: false });
+for (const ev of ['gesturestart', 'gesturechange', 'dblclick', 'contextmenu', 'selectstart'])
+  document.addEventListener(ev, e => e.preventDefault(), { passive: false });
+addEventListener('scroll', () => { if (scrollX || scrollY) scrollTo(0, 0); });
+
 // экранные кнопки срабатывают на касание сразу, без задержки click
 function tapButton(id, fn){
   $(id).addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); fn(); });

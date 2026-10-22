@@ -1,7 +1,13 @@
 /* мобильная версия: сенсорные кнопки и подгонка под маленькие экраны */
-html,body{-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;overscroll-behavior:none}
+/* страница прибита к экрану: никакой прокрутки, отскока, pull-to-refresh, зума и увеличения шрифта при повороте.
+   Прокручивается только содержимое окон (.box), и то без передачи прокрутки странице. */
+html,body{position:fixed;inset:0;width:100%;height:100%;overflow:hidden;overscroll-behavior:none;touch-action:none;
+  -webkit-text-size-adjust:100%;text-size-adjust:100%;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none}
 canvas#c{touch-action:none}
-button,.modal{touch-action:manipulation}
+.modal{touch-action:pan-y}
+.box{overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y}
+button,.card,.wcard,.rune,.sock,.opt{touch-action:manipulation}
+img{-webkit-user-drag:none;pointer-events:none}
 
 /* подсказки в HTML: .kb — для клавиатуры, .tc — для пальцев (body.touch ставит js/core/input.js) */
 body.touch .kb,body:not(.touch) .tc{display:none!important}
@@ -12,6 +18,7 @@ body.touch #hint{display:none}
 body.touch[data-state=play] #touchUI{display:block}
 #stickBase{position:fixed;left:0;top:0;width:112px;height:112px;margin:-56px 0 0 -56px;border-radius:50%;pointer-events:none;opacity:0;transition:opacity .12s;
   background:radial-gradient(circle,rgba(255,224,138,.1),rgba(29,20,56,.35) 70%);box-shadow:0 0 0 3px rgba(11,6,24,.7),0 0 0 5px rgba(255,224,138,.4)}
+#stickBase:not(.on){visibility:hidden}
 #stickBase.on{opacity:1}
 #stickKnob{position:absolute;left:30px;top:30px;width:52px;height:52px;border-radius:50%;
   background:radial-gradient(circle at 40% 35%,var(--gold2),var(--gold) 60%,var(--gold3));box-shadow:0 0 0 3px var(--ink)}
