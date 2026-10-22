@@ -14,9 +14,9 @@ function loop(now){
   }
   if (steps === 4) acc = 0;
   if (state !== 'play') acc = 0;
-  if (player) render();
+  if (state === 'menu') drawMenu(); else if (player) render();
   if (player && ++frame % 4 === 0){ updHud(); drawPortrait(); }
   requestAnimationFrame(loop);
 }
-newGame();
+newGame(); goMenu();
 requestAnimationFrame(loop);

@@ -15,7 +15,8 @@ const WEATHER = {
 const weatherName = t => t === 'rain' && RUN.biome === 'ice' ? '🌨 Снегопад' : `${WEATHER[t].icon} ${WEATHER[t].name}`;
 const chunks = new Map();
 const cam = { x: 0, y: 0 };
-let state = 'start'; // start | pact | play | craft | pick | pause | dead
+let state = 'menu'; // menu | pact | play | craft | pick | pause | dead
+let lives = 0; // сколько раз ещё можно встать после смерти («Второе дыхание»)
 function setState(s){ state = s; document.body.dataset.state = s; setMusicGain(); } // data-state нужен CSS: кнопки для пальцев видны только в бою
 
 function newGame(){
@@ -51,6 +52,10 @@ function choosePact(id){
     while (inventory.length < 6) inventory.push(pick(all));
   }
   if (id === 'wind'){ const a = rnd(0, TAU); wind = { x: Math.cos(a), y: Math.sin(a) }; }
+  // бонусы прокачки, которые срабатывают в начале забега
+  lives = PACT.lives;
+  for (let i = 0; i < PACT.startRunes; i++) inventory.push(pick([...ELS, ...MODS]));
+  if (PACT.startLv){ level += PACT.startLv; pendingLevels += PACT.startLv; }
   recompile();
   setState('play'); showModal(null);
   musicStart();

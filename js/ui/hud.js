@@ -1,5 +1,5 @@
 // ---------- интерфейс ----------
-const portrait = $('portrait').getContext('2d'), logo = $('logo').getContext('2d');
+const portrait = $('portrait').getContext('2d');
 function updHud(){
   const P = player;
   $('hpFill').style.width = `calc(${Math.max(0, P.hp / P.maxHp * 100)}% - 4px)`;
@@ -34,7 +34,6 @@ function updHud(){
 }
 function drawPortrait(){
   const img = SPR.mage[Math.floor(performance.now() / 160) % 4];
-  for (const g of [portrait, logo]){ g.imageSmoothingEnabled = false; g.clearRect(0, 0, 44, 52); }
+  portrait.imageSmoothingEnabled = false; portrait.clearRect(0, 0, 44, 52);
   portrait.drawImage(img, 0, 0, 44, 52);
-  logo.drawImage(img, 0, 0);
 }

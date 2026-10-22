@@ -21,7 +21,10 @@ const PACTS = {
   alchemist: { icon: '🧪', name: 'Алхимик',            desc: 'Начинаешь без навыка, зато с 6 случайными рунами.' }
 };
 function pactStats(id){
-  const P = { dmg: 1, hp: 100, r: 14, speed: 1, spawn: 1, xp: 1, rune: 1, ehp: 1 };
+  const P = { dmg: 1, hp: 100, r: 14, speed: 1, spawn: 1, xp: 1, rune: 1, ehp: 1,
+    // то, что меняет только прокачка (data/upgrades.js)
+    cd: 1, proj: 1, crit: 0, critMul: 2, armor: 1, regen: 0, heal: 1, iframes: 1, lives: 0,
+    magnet: 1, dashCd: 1, dashInv: 16, dodge: 0, shards: 1, choice: 0, pactChoice: 0, startRunes: 0, startLv: 0 };
   if (id === 'glass'){ P.dmg = 2; P.hp = 50; }
   if (id === 'giant'){ P.hp = 250; P.r = 26; P.speed = 0.8; }
   if (id === 'tiny'){ P.hp = 60; P.r = 8; P.speed = 1.3; }
@@ -29,5 +32,5 @@ function pactStats(id){
   if (id === 'dark') P.xp = 1.5;
   if (id === 'echo') P.ehp = 1.6;
   if (id === 'greed'){ P.rune = 4; P.xp = 0.5; }
-  return P;
+  return applyMeta(P);
 }

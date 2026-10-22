@@ -20,6 +20,7 @@
 <link rel="stylesheet" href="css/modals.css">
 <link rel="stylesheet" href="css/workshop.css">
 <link rel="stylesheet" href="css/cards.css">
+<link rel="stylesheet" href="css/menu.css">
 <link rel="stylesheet" href="css/mobile.css">
 </head>
 <body>
@@ -44,9 +45,27 @@
   <button class="tbtn" id="tCraft" aria-label="Мастерская">🔮<span id="tCraftN"></span></button>
 </div>
 
-<div id="startM" class="modal show"><div class="box frame center" style="max-width:560px">
-  <canvas id="logo" width="22" height="26" style="width:110px;height:130px"></canvas>
-  <h2 class="ttl" style="font-size:26px">МАГ ХАОСА</h2>
+<!-- главное меню: маг стоит в #menuStage, его рисует холст (js/render/menu-scene.js) -->
+<div id="menuM" class="modal menu show">
+  <div class="menuTop">
+    <h1 class="ttl menuTitle">МАГ ХАОСА</h1>
+    <div class="shardPill" id="menuShards"></div>
+  </div>
+  <div id="menuStage"></div>
+  <div class="menuBtns">
+    <button class="pbtn" id="playBtn">▶ ИГРАТЬ</button>
+    <div class="menuRow">
+      <button class="mbtn" id="treeBtn"><span>🌳</span>ПРОКАЧКА</button>
+      <button class="mbtn" id="wardBtn"><span>👘</span>ГАРДЕРОБ</button>
+      <button class="mbtn" id="setBtn"><span>⚙️</span>НАСТРОЙКИ</button>
+      <button class="mbtn" id="helpBtn"><span>📖</span>КАК ИГРАТЬ</button>
+    </div>
+    <div class="menuStats" id="menuStats"></div>
+  </div>
+</div>
+
+<div id="helpM" class="modal"><div class="box frame center" style="max-width:560px">
+  <h2 class="ttl">КАК ИГРАТЬ</h2>
   <div class="sub">Собирай руны, склеивай из них навыки и устраивай вакханалию.<br>Каждый забег — новый мир и новый пакт.</div>
   <div class="keys tc">
     <kbd>🕹</kbd><span>веди пальцем по экрану — бегать</span>
@@ -64,7 +83,33 @@
     <kbd>M</kbd><span>звук вкл/выкл</span>
   </div>
   <div class="sub">Руна 🔗 «Цепь» запускает следующий навык прямо из точки попадания. Отсюда и начинается хаос.<br>🐾 В мире прячутся питомцы. Как их заполучить — смотри в паузе (<span class="kb">Esc</span><span class="tc">⏸</span>).</div>
-  <div class="btnrow"><button class="pbtn" id="startBtn">ПОГНАЛИ!</button><button class="pbtn alt" id="wardBtn">ГАРДЕРОБ</button></div>
+  <div class="sub">💠 После каждого забега ты получаешь осколки хаоса — трать их в прокачке, чтобы следующий забег был сильнее.</div>
+  <button class="pbtn" id="helpClose">ПОНЯТНО</button>
+</div></div>
+
+<div id="setM" class="modal"><div class="box frame center" style="max-width:460px">
+  <h2 class="ttl">НАСТРОЙКИ</h2>
+  <div class="opts">
+    <button class="opt" data-opt="sound"></button>
+    <button class="opt" data-opt="music"></button>
+    <button class="opt" data-opt="shake"></button>
+  </div>
+  <button class="pbtn" id="setClose">ГОТОВО</button>
+</div></div>
+
+<div id="treeM" class="modal"><div class="box frame">
+  <div class="treeHead"><h2 class="ttl">ПРОКАЧКА</h2><div class="shardPill" id="treeShards"></div></div>
+  <div class="sub treeSub">За каждый забег ты получаешь 💠 осколки хаоса. Вкладывай их в навыки мага — бонусы действуют во всех следующих забегах.</div>
+  <div class="treeBody">
+    <div>
+      <div class="treeTabs" id="treeTabs"></div>
+      <div class="tree" id="treeUI"></div>
+    </div>
+    <div class="treeSide">
+      <div class="treeInfo" id="treeInfo"></div>
+      <div class="foot"><button class="pbtn alt" id="treeReset">СБРОСИТЬ</button><button class="pbtn" id="treeClose">ГОТОВО</button></div>
+    </div>
+  </div>
 </div></div>
 
 <div id="pactM" class="modal"><div class="box frame center" style="max-width:780px">
@@ -72,6 +117,7 @@
   <h2 class="ttl">ВЫБЕРИ ПАКТ</h2>
   <div class="sub">Пакт меняет правила всего забега. Выбирай с умом.</div>
   <div class="cards" id="pactCards"></div>
+  <button class="pbtn alt" id="pactBack" style="margin-top:14px">← В МЕНЮ</button>
 </div></div>
 
 <div id="craftM" class="modal"><div class="box frame">
@@ -108,18 +154,19 @@
   <div class="sub" id="pauseInfo"></div>
   <div class="petlist" id="petList"></div>
   <div class="opts">
-    <button class="opt" id="optSound"></button>
-    <button class="opt" id="optMusic"></button>
-    <button class="opt" id="optShake"></button>
+    <button class="opt" data-opt="sound"></button>
+    <button class="opt" data-opt="music"></button>
+    <button class="opt" data-opt="shake"></button>
   </div>
-  <div class="btnrow"><button class="pbtn" id="resumeBtn">ПРОДОЛЖИТЬ</button><button class="pbtn alt" id="wardBtn2">ГАРДЕРОБ</button></div>
+  <div class="btnrow"><button class="pbtn" id="resumeBtn">ПРОДОЛЖИТЬ</button><button class="pbtn alt" id="endRunBtn">ЗАВЕРШИТЬ ЗАБЕГ</button></div>
 </div></div>
 
 <div id="deadM" class="modal"><div class="box frame center" style="max-width:520px">
   <div style="font-size:52px">💀</div>
   <h2 class="ttl">МАГ ПАЛ</h2>
   <div class="stats" id="deadStats"></div>
-  <div class="btnrow"><button class="pbtn" id="againBtn">НОВЫЙ ЗАБЕГ</button><button class="pbtn alt" id="wardBtn3">ГАРДЕРОБ</button></div>
+  <div class="reward" id="deadReward"></div>
+  <div class="btnrow"><button class="pbtn" id="againBtn">ЕЩЁ РАЗ</button><button class="pbtn alt" id="deadTree">🌳 ПРОКАЧКА</button><button class="pbtn alt" id="menuBtn">В МЕНЮ</button></div>
 </div></div>
 
 <div id="wardM" class="modal"><div class="box frame center" style="max-width:820px">
@@ -132,7 +179,9 @@
 <script src="js/core/utils.js"></script>
 <script src="js/data/runes.js"></script>
 <script src="js/data/worlds.js"></script>
+<script src="js/data/upgrades.js"></script>
 <script src="js/core/settings.js"></script>
+<script src="js/core/meta.js"></script>
 <script src="js/core/audio.js"></script>
 <script src="js/sprites/mage-and-enemies.js"></script>
 <script src="js/sprites/pets.js"></script>
@@ -143,6 +192,7 @@
 <script src="js/core/input.js"></script>
 <script src="js/core/touch.js"></script>
 <script src="js/ui/modals.js"></script>
+<script src="js/ui/menu.js"></script>
 <script src="js/game/world.js"></script>
 <script src="js/game/skills.js"></script>
 <script src="js/game/grid.js"></script>
@@ -152,6 +202,7 @@
 <script src="js/game/effects.js"></script>
 <script src="js/game/update.js"></script>
 <script src="js/render/render.js"></script>
+<script src="js/render/menu-scene.js"></script>
 <script src="js/ui/hud.js"></script>
 <script src="js/main.js"></script>
 </body>

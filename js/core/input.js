@@ -17,6 +17,14 @@ addEventListener('pointermove', e => {
 const KEY = name => (TOUCH ? { craft: '🔮', pause: '⏸' } : { craft: 'TAB', pause: 'Esc' })[name];
 
 addEventListener('keydown', e => {
+  if (state === 'menu'){
+    // в меню: Esc закрывает вложенное окно, Enter — играть
+    if (e.code === 'Escape') goMenu();
+    if (e.code === 'Enter' && $('menuM').classList.contains('show')) startRun();
+    if (e.code === 'Tab') e.preventDefault();
+    return;
+  }
+  if (state === 'pact' && e.code === 'Escape'){ goMenu(); return; }
   if (e.code === 'Tab'){ e.preventDefault(); if (state === 'play') openCraft(); else if (state === 'craft') closeModal(); return; }
   if (e.code === 'Escape'){ if (state === 'play') openPause(); else if (state === 'craft' || state === 'pause') closeModal(); return; }
   if (e.code === 'KeyM'){ SET.sound = !SET.sound; saveSet(); applySound(); renderOpts(); }
@@ -64,6 +72,6 @@ function doDash(tx, ty){
   if (!dx && !dy){ const [ax, ay] = tx === undefined ? aimWorld() : [tx, ty]; dx = ax - player.x; dy = ay - player.y; }
   const d = Math.hypot(dx, dy) || 1;
   player.vx = dx / d * 13; player.vy = dy / d * 13;
-  player.dash = 11; player.dashCd = 48; player.inv = Math.max(player.inv, 16);
+  player.dash = 11; player.dashCd = Math.round(48 * PACT.dashCd); player.inv = Math.max(player.inv, PACT.dashInv);
   sfx.dash();
 }

@@ -1,0 +1,120 @@
+/* главное меню и дерево прокачки */
+body[data-state=menu] #hudL,body[data-state=menu] #hudR,body[data-state=menu] #skillbar,body[data-state=menu] #hint{display:none}
+
+/* меню: сверху название, в центре место под мага (его рисует холст), снизу кнопки */
+.modal.menu{background:none;flex-direction:column;align-items:stretch;justify-content:space-between;gap:10px;
+  padding:max(18px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(18px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))}
+.menuTop{display:flex;flex-direction:column;align-items:center;gap:10px}
+.menuTitle{margin:0;font-size:clamp(22px,4.4vw,40px);text-align:center}
+.shardPill{display:inline-block;font-family:var(--big);font-size:12px;color:var(--gold2);background:rgba(11,6,24,.75);padding:8px 12px 6px;
+  box-shadow:0 0 0 2px var(--ink),0 0 0 4px var(--edge);white-space:nowrap}
+#menuStage{flex:1;min-height:150px}
+.menuBtns{display:flex;flex-direction:column;align-items:center;gap:16px}
+#playBtn{font-size:16px;padding:18px 34px 16px;min-width:min(300px,100%)}
+.menuRow{display:grid;grid-template-columns:repeat(4,minmax(0,118px));gap:12px;justify-content:center;width:100%}
+.mbtn{font-family:var(--big);font-size:8px;line-height:1.3;color:var(--txt);background:#2c2150;border:0;padding:12px 6px 10px;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;gap:8px;box-shadow:0 0 0 2px var(--ink),inset -3px -3px 0 #160f2c,inset 3px 3px 0 #4a3a86,0 5px 0 3px rgba(0,0,0,.35)}
+.mbtn span{font-size:24px;line-height:1;filter:drop-shadow(2px 2px 0 var(--ink))}
+.mbtn:hover{filter:brightness(1.2)}
+.mbtn:active{transform:translateY(2px)}
+/* в прокачке есть что купить */
+.mbtn.glow{box-shadow:0 0 0 2px var(--ink),inset -3px -3px 0 #160f2c,inset 3px 3px 0 #4a3a86,0 0 0 4px var(--gold),0 0 16px 4px rgba(255,210,90,.45);animation:glowPulse 1.4s infinite}
+@keyframes glowPulse{50%{filter:brightness(1.25)}}
+.menuStats{font-size:13px;color:var(--dim);text-align:center}
+.menuStats b{color:var(--gold2)}
+
+/* награда на экране смерти */
+.reward{margin:-8px auto 20px;padding:12px;max-width:400px;background:rgba(0,0,0,.25);box-shadow:0 0 0 2px var(--ink),inset 0 0 0 2px var(--edge)}
+.rwTotal{font-family:var(--big);font-size:16px;color:var(--gold2);text-shadow:2px 2px 0 var(--ink)}
+.rwTotal small{font-family:var(--pix);font-size:13px;color:var(--dim);text-shadow:none}
+.rwParts{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 12px;margin-top:8px;font-size:13px;color:var(--dim)}
+.rwHave{margin-top:6px;font-size:13px}
+
+/* дерево прокачки */
+#treeM .box{max-width:1040px}
+.treeHead{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:6px}
+.treeHead h2{margin:0}
+.treeBody{display:grid;grid-template-columns:1fr;gap:16px}
+.treeTabs{display:none}
+.tree{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.branch{padding:10px 6px 6px;background:rgba(0,0,0,.22);box-shadow:0 0 0 2px var(--ink),inset 0 0 0 2px #2e2358}
+.bh{text-align:center;font-weight:700;font-size:15px;color:var(--bc);margin-bottom:6px;text-shadow:2px 2px 0 var(--ink)}
+.bgrid{position:relative;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(4,72px);justify-items:center;align-items:center}
+.edges{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.edges line{stroke:#2e2358;stroke-width:5;vector-effect:non-scaling-stroke}
+.edges line.lit{stroke:var(--bc)}
+.node{position:relative;width:54px;height:54px;padding:0;border:0;cursor:pointer;background:radial-gradient(circle at 50% 35%,#3a2b6e,#160f2c 85%);
+  box-shadow:0 0 0 2px var(--ink),inset 0 0 0 2px #3a2d66,0 4px 0 2px rgba(0,0,0,.35);transition:transform .1s}
+.node:hover{transform:translateY(-2px)}
+.node .ni{font-size:24px;line-height:54px;filter:drop-shadow(2px 2px 0 var(--ink))}
+.node .nl{position:absolute;left:50%;bottom:-9px;transform:translateX(-50%);font-family:var(--big);font-size:7px;color:var(--txt);background:var(--ink);padding:3px 4px 2px;white-space:nowrap}
+.node.st-locked{filter:grayscale(1) brightness(.55)}
+.node.st-poor .nl{color:var(--dim)}
+.node.st-buy{box-shadow:0 0 0 2px var(--ink),inset 0 0 0 2px var(--bc),0 0 12px 2px var(--bc),0 4px 0 2px rgba(0,0,0,.35);animation:glowPulse 1.4s infinite}
+.node.st-max{background:radial-gradient(circle at 50% 35%,#6a4f1a,#2a1d08 85%);box-shadow:0 0 0 2px var(--ink),inset 0 0 0 2px var(--gold),0 4px 0 2px rgba(0,0,0,.35)}
+.node.st-max .nl{color:var(--ink);background:var(--gold)}
+.node.sel{outline:3px solid #fff;outline-offset:3px}
+.treeInfo{padding:14px;min-height:120px;background:rgba(0,0,0,.25);box-shadow:0 0 0 2px var(--ink),inset 0 0 0 2px #2e2358}
+.tiHead{display:flex;gap:12px;align-items:center;margin-bottom:10px}
+.tiHead .ni{font-size:28px;width:48px;height:48px;display:flex;align-items:center;justify-content:center;flex:none;background:#160f2c;box-shadow:0 0 0 2px var(--ink),inset 0 0 0 2px var(--bc)}
+.tiHead b{display:block;font-size:17px;color:var(--gold2)}
+.tiHead small{font-size:13px}
+.tiLine{font-size:14px;margin:6px 0;color:var(--dim)}
+.tiLine b{color:var(--txt)}
+.tiLine .nx,.tiLine.nx{color:#9dffb0}
+.tiReq{font-size:13px;color:#ff9ab0;margin-top:8px}
+#buyBtn{margin-top:12px}
+.tiTitle{font-weight:700;font-size:16px;color:var(--gold2)}
+.tiHint{font-size:13px;color:var(--dim);margin:4px 0 10px}
+.statGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr) minmax(64px,auto));gap:5px 12px;font-size:13.5px;align-items:baseline}
+.statGrid b{color:#9dffb0;text-align:right}
+.statGrid b.off{color:var(--dim);font-weight:400}
+#treeM .foot{justify-content:flex-end;gap:14px;margin-top:14px}
+
+/* узкий экран: одна ветка на экране, сверху вкладки */
+@media (max-width:900px){
+  .treeTabs{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px}
+  .ttab{font-family:var(--pix);font-weight:700;font-size:13px;color:var(--dim);background:#1a1234;border:0;padding:8px 2px 6px;cursor:pointer;
+    display:flex;flex-direction:column;align-items:center;gap:2px;box-shadow:0 0 0 2px var(--ink),inset 0 0 0 2px #2e2358}
+  .ttab.on{color:var(--bc);background:#2c2150;box-shadow:0 0 0 2px var(--ink),inset 0 0 0 2px var(--bc)}
+  .tree{grid-template-columns:1fr}
+  .branch{display:none;max-width:340px;width:100%;margin:0 auto;box-sizing:border-box}
+  .branch.on{display:block}
+  .branch .bh{display:none}
+}
+@media (max-width:600px),(max-height:700px){
+  .stats{gap:4px 16px;margin:8px auto 14px;font-size:14px}
+  #deadM .box>div:first-child{font-size:34px!important}
+  .reward{margin:0 auto 14px;padding:8px}
+  #deadM .btnrow{gap:10px}
+}
+@media (max-width:420px){
+  .menuRow{grid-template-columns:repeat(2,1fr)}
+  .mbtn{flex-direction:row;justify-content:center;padding:10px 6px}
+  .mbtn span{font-size:20px}
+  .treeSub{display:none}
+}
+/* телефон боком: маг слева, кнопки справа; в прокачке дерево слева, описание справа */
+@media (max-height:560px) and (orientation:landscape){
+  #menuM.show{display:grid;grid-template-columns:1fr minmax(280px,42%);grid-template-rows:auto 1fr;gap:6px 18px}
+  .menuTop{grid-column:1;grid-row:1}
+  #menuStage{grid-column:1;grid-row:2;min-height:0}
+  .menuBtns{grid-column:2;grid-row:1/3;justify-content:center;gap:12px}
+  .menuRow{grid-template-columns:repeat(2,1fr)}
+  .mbtn{flex-direction:row;justify-content:center;padding:10px 6px}
+  .mbtn span{font-size:20px}
+  .menuTitle{font-size:20px}
+  .treeSub{display:none}
+  .treeBody{grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start}
+  .bgrid{grid-template-rows:repeat(4,56px)}
+  .node{width:44px;height:44px}.node .ni{font-size:20px;line-height:44px}
+  .ttab{flex-direction:row;justify-content:center;gap:5px;padding:7px 2px 5px}
+  .treeHead{margin-bottom:8px}.treeHead h2{font-size:13px}
+  .branch{padding:4px 6px 8px}
+  .treeInfo{padding:10px 12px;min-height:0}
+  .tiHint{display:none}
+  .tiTitle{font-size:14px;margin-bottom:6px}
+  .statGrid{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr) auto;gap:2px 8px;font-size:11.5px}
+  .statGrid span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #treeM .foot{margin-top:10px}
+}

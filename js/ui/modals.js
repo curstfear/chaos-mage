@@ -8,31 +8,30 @@ function openPause(){
     `<br>Погода: ${weatherName(weather.type)}`;
   renderOpts(); renderPetList(); showModal('pauseM');
 }
-function renderOpts(){
-  $('optSound').textContent = `🔊 Звук: ${SET.sound ? 'вкл' : 'выкл'}`;
-  $('optMusic').textContent = `🎵 Музыка: ${SET.music ? 'вкл' : 'выкл'}`;
-  $('optShake').textContent = `📳 Тряска экрана: ${SHAKE_NAME[SET.shake]}`;
-}
-$('optSound').onclick = () => { SET.sound = !SET.sound; saveSet(); applySound(); renderOpts(); sfx.click(); };
-$('optMusic').onclick = () => { SET.music = !SET.music; saveSet(); setMusicGain(); renderOpts(); sfx.click(); };
-$('optShake').onclick = () => { SET.shake = (SET.shake + 1) % 3; saveSet(); renderOpts(); sfx.click(); };
+// кнопки настроек есть и в паузе, и в меню — у всех data-opt
+const OPTS = {
+  sound: { text: () => `🔊 Звук: ${SET.sound ? 'вкл' : 'выкл'}`, toggle: () => { SET.sound = !SET.sound; applySound(); } },
+  music: { text: () => `🎵 Музыка: ${SET.music ? 'вкл' : 'выкл'}`, toggle: () => { SET.music = !SET.music; setMusicGain(); } },
+  shake: { text: () => `📳 Тряска экрана: ${SHAKE_NAME[SET.shake]}`, toggle: () => { SET.shake = (SET.shake + 1) % 3; } }
+};
+function renderOpts(){ document.querySelectorAll('[data-opt]').forEach(el => el.textContent = OPTS[el.dataset.opt].text()); }
+document.querySelectorAll('[data-opt]').forEach(el => el.onclick = () => { OPTS[el.dataset.opt].toggle(); saveSet(); renderOpts(); sfx.click(); });
 function startRun(){
   audioInit(); goFullscreen(); newGame(); setState('pact'); sfx.click();
   const B = BIOMES[RUN.biome];
   $('biomeInfo').innerHTML = `Мир этого забега: <b style="color:var(--gold2)">${B.icon} ${B.name}</b><small>${B.desc}</small>`;
-  const opts = Object.keys(PACTS).sort(() => Math.random() - 0.5).slice(0, 3);
+  const opts = Object.keys(PACTS).sort(() => Math.random() - 0.5).slice(0, 3 + PACT.pactChoice);
   $('pactCards').innerHTML = opts.map(id => { const P = PACTS[id];
     return `<div class="card" data-p="${id}" style="--tc:var(--gold)"><div class="ic">${P.icon}</div><div class="ty" style="color:var(--gold)">пакт</div><b>${P.name}</b><p>${P.desc}</p></div>`; }).join('');
   document.querySelectorAll('#pactCards .card').forEach(el => el.onclick = () => { sfx.rune(); choosePact(el.dataset.p); });
   showModal('pactM');
 }
-$('startBtn').onclick = startRun;
 $('againBtn').onclick = startRun;
 $('craftClose').onclick = closeModal;
 $('resumeBtn').onclick = closeModal;
 
 // гардероб
-let wardBack = 'startM';
+let wardBack = 'menuM';
 function openWardrobe(back){ wardBack = back; renderWard(); showModal('wardM'); sfx.click(); }
 function renderWard(){
   $('wardUI').innerHTML = Object.entries(COSTUMES).map(([id, C]) => {
@@ -49,7 +48,7 @@ function renderWard(){
 function unlockCostume(id){
   if (WARD.unlocked.includes(id)) return;
   WARD.unlocked.push(id); saveWard();
-  banner(`🎉 Новый костюм: ${COSTUMES[id].name}! (${KEY('pause')} → гардероб)`, '#ffe08a');
+  banner(`🎉 Новый костюм: ${COSTUMES[id].name}! (гардероб — в главном меню)`, '#ffe08a');
   sfx.level();
 }
 // сова: выбрать 3 руны в дар
@@ -79,9 +78,6 @@ function renderPetList(){
     ? `<div>${P.icon} <b>${P.name}</b> — ${P.desc}</div>`
     : `<div class="off">🔒 ${P.name}: ${P.how}</div>`).join('') + (hasFeather ? '<div>🪶 У тебя перо феникса — смерть не будет концом</div>' : '');
 }
-$('wardBtn').onclick = () => openWardrobe('startM');
-$('wardBtn2').onclick = () => openWardrobe('pauseM');
-$('wardBtn3').onclick = () => openWardrobe('deadM');
 $('wardClose').onclick = () => { showModal(wardBack); sfx.click(); };
 
 // мастерская
@@ -155,7 +151,7 @@ function rollRunes(){
   for (const k of ELS) pool.push(k, k);
   for (const k of MODS) pool.push(k, k);
   pool.push('trigger', 'trigger');
-  while (out.length < 3){ const r = pick(pool); if (!out.includes(r)) out.push(r); }
+  while (out.length < 3 + PACT.choice){ const r = pick(pool); if (!out.includes(r)) out.push(r); }
   return out;
 }
 function openPick(kind){

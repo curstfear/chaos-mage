@@ -15,7 +15,6 @@
 .opt{font-family:var(--pix);font-size:16px;font-weight:600;color:var(--txt);background:#2c2150;border:0;padding:11px 14px;cursor:pointer;text-align:left;
   box-shadow:0 0 0 2px var(--ink),inset -3px -3px 0 #160f2c,inset 3px 3px 0 #4a3a86}
 .opt:hover{filter:brightness(1.2)}
-#logo{display:block;margin:0 auto 8px;image-rendering:pixelated}
 .btnrow{display:flex;gap:16px;justify-content:center;flex-wrap:wrap}
 .pets{font-size:16px;letter-spacing:3px;filter:drop-shadow(2px 2px 0 var(--ink))}
 .pets:empty{display:none}

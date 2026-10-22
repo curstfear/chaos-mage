@@ -76,13 +76,40 @@ for (const prof of PROFILES){
   await page.goto(`http://localhost:${PORT}/`, { waitUntil: 'networkidle2' });
   await sleep(300);
 
-  await step('стартовый экран', async () => {
-    if (await g('state') !== 'start') throw new Error('state = ' + await g('state'));
+  await page.evaluate(() => localStorage.clear()); // каждый прогон — как первый запуск
+  await page.reload({ waitUntil: 'networkidle2' });
+  await sleep(300);
+  await step('главное меню', async () => {
+    if (await g('state') !== 'menu') throw new Error('state = ' + await g('state'));
     if (await g('TOUCH') !== touch) throw new Error('TOUCH = ' + await g('TOUCH'));
-    await shot('1-start');
+    await shot('0-menu');
+  });
+  await step('настройки и «как играть»', async () => {
+    await press('#setBtn'); await shot('0-settings');
+    const before = await g('SET.music');
+    await press('[data-opt=music]');
+    if (await g('SET.music') === before) throw new Error('музыка не переключилась');
+    await press('[data-opt=music]');
+    await press('#setClose');
+    await press('#helpBtn'); await shot('0-help'); await press('#helpClose');
+    if (!(await g("$('menuM').classList.contains('show')"))) throw new Error('не вернулись в меню');
+  });
+  await step('прокачка: покупка и бонус в забеге', async () => {
+    await g('META.shards = 500; renderMenu()');
+    await press('#treeBtn');
+    await shot('0-tree');
+    await press('.node[data-u=might]');
+    await shot('0-tree-node');
+    await press('#buyBtn');
+    if (await g('upLvl("might")') !== 1) throw new Error('не купилось');
+    if (await g('META.shards') !== 485) throw new Error('осколки: ' + await g('META.shards'));
+    if (Math.abs(await g('pactStats(null).dmg') - 1.06) > 1e-9) throw new Error('бонус не применился');
+    await press('.node[data-u=heart]'); // закрытый навык: купить нельзя
+    if (!(await g("$('buyBtn').disabled"))) throw new Error('закрытый навык можно купить');
+    await press('#treeClose');
   });
   await step('выбор пакта и начало боя', async () => {
-    await press('#startBtn');
+    await press('#playBtn');
     await shot('2-pact');
     await press('#pactCards .card');
     if (await g('state') !== 'play') throw new Error('state = ' + await g('state'));
@@ -150,13 +177,39 @@ for (const prof of PROFILES){
     await shot('7-pause');
     await press('#resumeBtn');
   });
-  await step('смерть и новый забег', async () => {
+  await step('смерть, награда и новый забег', async () => {
+    const shards = await g('META.shards');
     await g('player.hp = -100');
     await sleep(500);
     if (await g('state') !== 'dead') throw new Error('state = ' + await g('state'));
+    if (!(await g('META.shards') > shards)) throw new Error('осколки не начислились');
     await shot('8-dead');
     await press('#againBtn');
     if (await g('state') !== 'pact') throw new Error('state = ' + await g('state'));
+  });
+  await step('из выбора пакта обратно в меню', async () => {
+    await press('#pactBack');
+    if (await g('state') !== 'menu') throw new Error('state = ' + await g('state'));
+  });
+  await step('вся прокачка на максимуме', async () => {
+    await g('for (const u of UPGRADES) META.up[u.id] = u.max; saveMeta(); goMenu()');
+    await press('#playBtn');
+    const pacts = await g("document.querySelectorAll('#pactCards .card').length");
+    if (pacts !== 5) throw new Error(`пактов на выбор ${pacts}, а должно быть 5`);
+    await g("choosePact('swarm')"); // пакт без особых правил, чтобы проверять чистые бонусы
+    await sleep(300);
+    if (await g('state') !== 'pick') throw new Error('стартовый уровень не дал выбор руны, state = ' + await g('state'));
+    const cards = await g("document.querySelectorAll('#cards .card').length");
+    if (cards !== 4) throw new Error(`рун на выбор ${cards}, а должно быть 4`);
+    await shot('9-maxed-pick');
+    await press('#cards .card'); await sleep(200);
+    if (await g('state') === 'pick') await press('#cards .card');
+    if (await g('level') !== 3) throw new Error('уровень ' + await g('level'));
+    if (await g('lives') !== 1) throw new Error('нет второго дыхания');
+    await g('player.hp = -100'); await sleep(300);
+    if (await g('state') !== 'play' || await g('lives') !== 0) throw new Error('второе дыхание не сработало');
+    await sleep(2500);
+    await g('META.up = {}; saveMeta()');
   });
   if (errors.length){ failed = true; console.log('  ✗ ошибки в консоли:\n    ' + errors.join('\n    ')); }
   await page.close();

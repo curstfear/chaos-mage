@@ -29,6 +29,7 @@ function hitEnemy(e, src, dmg, x, y){
   if (e.wet > 0 && (el === 'lightning' || el === 'ice')) d *= 1.5;
   if (src.sniper) d *= 1 + Math.min(1, Math.hypot(e.x - player.x, e.y - player.y) / 500) * src.sniper;
   if (src.keen && Math.random() < 0.2 * src.keen){ d *= 2; crit = true; }
+  if (PACT.crit && !crit && Math.random() < PACT.crit){ d *= PACT.critMul; crit = true; }
   if (src.execute && !e.static && e.hp - d < e.maxHp * (e.boss ? 0.05 : 0.2)){ d = Math.max(d, e.hp); crit = true; }
   if (src.mark) e.mark = 240;
   e.lastSrc = src;

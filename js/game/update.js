@@ -15,7 +15,7 @@ function update(){
   if (RUN.pact === 'wind'){ P.x += wind.x * 0.9; P.y += wind.y * 0.9; }
   if (pushOut(P, P.r * 0.8) && P.dash > 0) sfx.thud();
   if (P.dashCd > 0) P.dashCd--; if (P.inv > 0) P.inv--;
-  if (RUN.pact === 'vampire') P.hp -= 1.2 / 60; else P.hp = Math.min(P.maxHp, P.hp + 0.012);
+  if (RUN.pact === 'vampire') P.hp -= 1.2 / 60; else P.hp = Math.min(P.maxHp, P.hp + 0.012 + PACT.regen / 60);
   if (TOUCH) updateAutoAim();
   const [ax, ay] = aimWorld(); P.face = Math.atan2(ay - P.y, ax - P.x);
 
@@ -325,10 +325,10 @@ function update(){
   // кристаллы опыта и подарки
   for (const g of gems){
     const dx = P.x - g.x, dy = P.y - g.y, d = Math.hypot(dx, dy) || 1;
-    if (d < (hasPet('toad') ? 300 : 140) || g.pull){ g.pull = true; g.ps = (g.ps || 0) + 0.4; const s = Math.min(14, 3 + g.ps); g.x += dx / d * s; g.y += dy / d * s; }
+    if (d < (hasPet('toad') ? 300 : 140) * PACT.magnet || g.pull){ g.pull = true; g.ps = (g.ps || 0) + 0.4; const s = Math.min(14, 3 + g.ps); g.x += dx / d * s; g.y += dy / d * s; }
     if (d < P.r + 10){
       g.taken = true;
-      if (g.kind === 'heart'){ P.hp = Math.min(P.maxHp, P.hp + 20); banner('+20 ❤️', '#ff5a7a'); sfx.rune(); }
+      if (g.kind === 'heart'){ const h = Math.round(20 * PACT.heal); P.hp = Math.min(P.maxHp, P.hp + h); banner(`+${h} ❤️`, '#ff5a7a'); sfx.rune(); }
       else if (g.kind === 'feather'){ hasFeather = true; banner('🪶 Перо феникса! Если погибнешь — возродишься', '#ff8a3d'); sfx.rune(); }
       else if (g.kind === 'rune'){ inventory.push(g.r); banner(`🎁 Руна: ${RUNES[g.r].icon} ${RUNES[g.r].name}! ${KEY('craft')} — вставить`, '#ffd25a'); sfx.rune(); }
       else { gainXp(g.v); sfx.gem(); }
@@ -365,24 +365,43 @@ function update(){
   if (shake > 0) shake *= 0.85;
   if (shake < 0.3) shake = 0;
 
-  if (P.hp <= 0){ if (hasFeather) revive(); else { die(); return; } }
+  if (P.hp <= 0){ if (hasFeather) revive(); else if (lives > 0) secondWind(); else { die(); return; } }
   if (pendingLevels > 0 && state === 'play') openPick('level');
 }
 function hurt(d){
+  if (PACT.dodge && Math.random() < PACT.dodge){
+    player.inv = 20; sfx.dash();
+    nums.push({ x: player.x, y: player.y - player.r - 10, v: 'уклон!', t: 40, color: '#9dffb0' });
+    return;
+  }
   if (hasPet('guard')) d *= 0.75;
+  d *= PACT.armor;
   mom.fill(0);
-  player.hp -= d; player.inv = 40; shake = Math.max(shake, 6);
+  player.hp -= d; player.inv = Math.round(40 * PACT.iframes); shake = Math.max(shake, 6);
   burst(player.x, player.y, 14, '#ff3d6e', 5);
   sfx.hurt();
 }
+// «Второе дыхание» из прокачки
+function secondWind(){
+  const P = player;
+  lives--;
+  P.hp = P.maxHp * 0.5; P.inv = 150;
+  burst(P.x, P.y, 60, '#ffffff', 8);
+  banner('🕊️ ВТОРОЕ ДЫХАНИЕ!', '#ffffff');
+  sfx.level();
+}
 function die(){
   setState('dead');
+  const R = finishRun();
   const sec = Math.floor(tick / 60);
   const best = slotDmg.indexOf(Math.max(...slotDmg));
   $('deadStats').innerHTML = `<span>⏱ Время</span><b>${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}</b>
     <span>⭐ Уровень</span><b>${level}</b><span>💀 Убито</span><b>${kills}</b><span>🔥 Комбо</span><b>${bestCombo}</b><span>🏚 Разрушено</span><b>${destroyed}</b><span>🐾 Питомцы</span><b>${pets.map(p => PETS[p.id].icon).join('') || '—'}</b><span>🎽 Костюмы</span><b>${WARD.unlocked.length}/${Object.keys(COSTUMES).length}</b>
     <span style="grid-column:1/-1;margin-top:6px;color:var(--dim)">${BIOMES[RUN.biome].icon} ${BIOMES[RUN.biome].name} · ${PACTS[RUN.pact].icon} ${PACTS[RUN.pact].name}</span>
     <span style="grid-column:1/-1;color:var(--dim)">Лучший навык: <b style="float:none">${skillName(slots[best])}</b> — ${Math.round(slotDmg[best])} урона</span>`;
+  $('deadReward').innerHTML = `<div class="rwTotal">💠 +${R.total} <small>осколков хаоса</small></div>` +
+    `<div class="rwParts">${R.parts.filter(([, v]) => v > 0).map(([k, v]) => `<span>${k} +${v}</span>`).join('')}` +
+    (R.bonus ? `<span>💰 алчность +${R.bonus}</span>` : '') + `</div><div class="rwHave">теперь у тебя 💠 ${META.shards}</div>`;
   tone(300, 1.2, { type: 'sawtooth', vol: 0.08, to: 60 });
   showModal('deadM');
 }
