@@ -16,14 +16,15 @@ const WEATHER = {
 const weatherName = t => t === 'rain' && RUN.biome === 'ice' ? '🌨 Снегопад' : `${WEATHER[t].icon} ${WEATHER[t].name}`;
 const chunks = new Map();
 const cam = { x: 0, y: 0 };
-let state = 'menu'; // menu | pact | play | craft | pick | pause | dead
-let lives = 0; // сколько раз ещё можно встать после смерти («Второе дыхание»)
+let state = 'menu'; // menu | pact | play | craft | pick | pause | revive | dead
+let lives = 0; // сколько раз ещё можно встать после смерти («Второе дыхание» и святилища жизни)
+let shardRevives = 0; // сколько раз за забег уже возрождались за осколки
 function setState(s){ state = s; document.body.dataset.state = s; setMusicGain(); } // data-state нужен CSS: кнопки для пальцев видны только в бою
 
 function newGame(){
   RUN = { seed: Math.random() * 1e9 | 0, biome: pick(Object.keys(BIOMES)), pact: null };
   PACT = pactStats(null);
-  player = { x: 0, y: 0, vx: 0, vy: 0, r: 14, hp: PACT.hp, maxHp: PACT.hp, inv: 0, dash: 0, dashCd: 0, face: 0, onIce: false };
+  player = { x: 0, y: 0, vx: 0, vy: 0, r: 14, hp: PACT.hp, maxHp: PACT.hp, inv: 0, dash: 0, dashCd: 0, face: 0, onIce: false, shield: false, barrierCd: 0 };
   enemies = []; projs = []; meteors = []; puddles = []; ebullets = []; gems = []; particles = []; mageTrail.length = 0; amb = []; zaps = []; beams = []; slashes = [];
   nums = []; scheduled = []; banners = []; nearProps = []; nearSolids = []; holes = []; ties = []; pathLog = [];
   pets = []; trail = []; toad = null; hasFeather = false; comboRuneCd = 0; mom = new Array(NSLOTS).fill(0);
@@ -35,7 +36,7 @@ function newGame(){
   tick = 0; kills = 0; score = 0; combo = 0; comboTimer = 0; bestCombo = 0; level = 1; xp = 0; shake = 0; bossTimer = 0; bossCount = 0; lastBoss = 'boss'; pendingLevels = 0;
   evTimer = 60 * 60; ev = null; moonT = 0; wind = { x: 1, y: 0 };
   weather = { type: 'clear', t: 60 * 75 }; gust = null; skyBolts = []; flash = 0;
-  goldT = 0; goldTimer = Math.round(60 * rnd(150, 210)); destroyed = 0;
+  goldT = 0; goldTimer = Math.round(60 * rnd(150, 210)); destroyed = 0; shardRevives = 0;
   weatherSound();
   chunks.clear();
   cam.x = 0; cam.y = 0;

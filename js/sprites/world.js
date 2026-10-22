@@ -214,6 +214,7 @@ function buildSprites(){
   SPR.queen = [0, 1].map(queenSprite); SPR.clock = [0, 1].map(clockSprite);
   SPR.altar = altarSprite(); SPR.gem = gemSprite(); SPR.turret = turretSprite(); SPR.ghost = ghostSprite();
   SPR.nest = nestSprite(); SPR.egg = eggSprite();
+  SPR.shrine = shrineSprite(); SPR.heart = heartSprite();
   SPR.pet = {
     healer: [0, 1].map(f => tinted(slimeSprite(f), '#4fe08a', 0.55)),
     guard: [0, 1].map(f => tinted(bruteSprite(f), '#4b8bff', 0.45)),

@@ -246,6 +246,26 @@ for (const prof of PROFILES){
       await shot(`12-${biome}`);
     }
   });
+  if (prof.name === 'desktop' || prof.name === 'phone-portrait') await step('новые руны: Рой, Град, Чума, Время, Дух, Звук, Магма и моды', async () => {
+    const CASES = [
+      ["{ form: 'swarm', element: 'plague', mods: ['jackpot', 'portal', 'barrier'] }", 'projs.some(p => p.homing >= 2) && player.shield && enemies.some(e => e.plague > 0)'],
+      ["{ form: 'hail', element: 'magma', mods: ['adrenaline', 'onrun', 'revenge'] }", 'meteors.length > 3'],
+      ["{ form: 'bolt', element: 'time', mods: ['multi', 'pierce', null] }", 'scheduled.length > 0'],
+      ["{ form: 'nova', element: 'sound', mods: [null, null, null] }", 'true'],
+      ["{ form: 'nova', element: 'spirit', mods: ['multi', null, null] }", 'true']
+    ];
+    for (const [slot, check] of CASES){
+      await g(`level = 12; slots[0] = ${slot}; slots[1] = { form: null, element: null, mods: [null, null, null] }; recompile(); cds.fill(1); player.shield = false; player.barrierCd = 0;
+        for (let k = 0; k < 8; k++) spawnEnemy('brute', player.x + 110 + (k % 4) * 40, player.y + (k - 4) * 34, true, true);`);
+      let ok = false;
+      for (let t = 0; t < 40 && !ok; t++){ ok = await g(check); if (!ok) await sleep(50); }
+      if (!ok) throw new Error(`руна не сработала: ${slot} (${check})`);
+      await sleep(400);
+    }
+    await g('doDash(); player.inv = 0; hurt(1)'); // «На бегу» и «Месть»
+    await sleep(1600); // «Время» и «Магма» срабатывают с задержкой
+    await shot('10-new-runes');
+  });
   await step('выпадение «Цепи»', async () => {
     const n = await g("inventory.filter(r => r === 'trigger').length");
     await g("dropRune(player.x + 260, player.y - 40, 'trigger')");
@@ -267,7 +287,11 @@ for (const prof of PROFILES){
     if (await g("[...document.querySelectorAll('#invUI .rune')].some(el => RUNES[inventory[+el.dataset.ri]].type !== 'mod')")) throw new Error('в списке не только моды');
     await shot('5-craft-sock');
     await press('#invUI .rune');
-    if (!(await g(`slots[${sock[0]}].mods[${sock[1]}]`))) throw new Error('руна не вставилась в выбранную ячейку');
+    if (await g(`slots[${sock[0]}].mods[${sock[1]}]`)) throw new Error('руна вставилась с первого нажатия, без описания');
+    if (!(await g("!!$('sockPut')"))) throw new Error('нет описания и кнопки «Вставить»');
+    await shot('5-craft-rune');
+    await press('#invUI .rune.sel');
+    if (!(await g(`slots[${sock[0]}].mods[${sock[1]}]`))) throw new Error('руна не вставилась вторым нажатием');
     await shot('5-craft-placed');
     await press('#craftClose');
     if (await g('state') !== 'play') throw new Error('не закрылась');
@@ -286,9 +310,14 @@ for (const prof of PROFILES){
     await press('#resumeBtn');
   });
   await step('смерть, награда и новый забег', async () => {
+    await g('META.shards = 120; tick = Math.max(tick, 600); player.hp = -100'); // забег должен длиться хоть немного, иначе награда 0
+    await sleep(300);
+    if (await g('state') !== 'revive') throw new Error('нет возрождения за осколки, state = ' + await g('state'));
+    await shot('8-revive');
+    await press('#reviveBtn');
+    if (await g('state') !== 'play' || await g('META.shards') !== 70 || !(await g('player.hp') > 0)) throw new Error('возрождение за осколки не сработало');
     const shards = await g('META.shards');
-    await g('tick = Math.max(tick, 600); player.hp = -100'); // забег должен длиться хоть немного, иначе награда 0
-    await sleep(500);
+    await g('player.hp = -100'); await sleep(300); // второе стоит 100 — уже не хватает, сразу смерть
     if (await g('state') !== 'dead') throw new Error('state = ' + await g('state'));
     if (!(await g('META.shards') > shards)) throw new Error('осколки не начислились');
     if (!(await g('META.coins') > 0)) throw new Error('монеты не начислились');
@@ -318,6 +347,8 @@ for (const prof of PROFILES){
     if (await g('lives') !== 1) throw new Error('нет второго дыхания');
     await g('player.hp = -100'); await sleep(300);
     if (await g('state') !== 'play' || await g('lives') !== 0) throw new Error('второе дыхание не сработало');
+    await g("chunks.get(Math.floor(player.x / CHUNK) + ',' + Math.floor(player.y / CHUNK)).props.push({ kind: 'shrine', x: player.x, y: player.y, r: 34, prog: SHRINE_T - 2, used: false })"); await sleep(300);
+    if (await g('lives') !== 1) throw new Error('святилище жизни не дало возрождение');
     await sleep(2500);
     await g('META.up = {}; saveMeta()');
   });

@@ -15,7 +15,8 @@
 .itab.on{color:var(--txt);background:#2c2150;box-shadow:0 0 0 2px var(--ink),inset 0 0 0 2px var(--tc)}
 .invEmpty{color:var(--dim);font-size:14px;line-height:1.4}
 .tipHint{color:var(--gold2);font-size:13px;margin-top:6px}
-#tip .pbtn{display:block;margin-top:10px;font-size:10px;padding:10px 14px 8px}
+.tipAct{display:flex;align-items:center;flex-wrap:wrap;gap:6px 12px;margin-top:8px;font-size:13px;color:var(--gold2)}
+.tipAct .pbtn{font-size:10px;padding:10px 14px 8px}
 .slot{padding:10px 12px;background:rgba(0,0,0,.22);box-shadow:0 0 0 2px var(--ink),inset 0 0 0 2px #2e2358}
 .slot.locked{opacity:.45}
 .slot .hd{display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:9px}

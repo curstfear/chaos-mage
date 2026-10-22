@@ -117,6 +117,17 @@ function drawProp(h){
       if (h.prog > 0){ ctx.strokeStyle = '#ffd25a'; ctx.lineWidth = 5; ctx.beginPath(); ctx.arc(h.x, h.y, h.r + 12, -Math.PI / 2, -Math.PI / 2 + h.prog / 110 * TAU); ctx.stroke(); }
     }
     ctx.globalAlpha = 1;
+  } else if (h.kind === 'shrine'){
+    if (!h.used){ ctx.globalAlpha = 0.3 + 0.15 * Math.sin(tick * 0.08); ctx.drawImage(glow('#ff6fa8'), h.x - 70, h.y - 70, 140, 140); ctx.globalAlpha = 1; }
+    shadow(h.x, h.y + 8, 34);
+    ctx.globalAlpha = h.used ? 0.5 : 1;
+    ctx.drawImage(SPR.shrine, h.x - 36, h.y - 24, 72, 42);
+    if (!h.used){
+      const k = h.prog / SHRINE_T, s = 1 + Math.sin(tick * (0.1 + k * 0.3)) * (0.06 + k * 0.1);
+      ctx.drawImage(SPR.heart, h.x - 16.5 * s, h.y - 56 + Math.sin(tick * 0.07) * 4, 33 * s, 30 * s);
+      if (h.prog > 0){ ctx.strokeStyle = '#ff6fa8'; ctx.lineWidth = 5; ctx.beginPath(); ctx.arc(h.x, h.y, h.r + 12, -Math.PI / 2, -Math.PI / 2 + k * TAU); ctx.stroke(); }
+    }
+    ctx.globalAlpha = 1;
   }
 }
 function drawSolid(s){
@@ -366,6 +377,10 @@ function drawPlayer(){
   ctx.globalAlpha = 0.55 + 0.15 * Math.sin(tick * 0.15); ctx.drawImage(glow(staffGlow(LOOK)), orbX - 26 * sc / 2, orbY - 26 * sc / 2, 26 * sc, 26 * sc);
   ctx.globalAlpha = 0.35; ctx.drawImage(glow('#9b7bff'), P.x - w, P.y - h * 0.7, w * 2, h * 1.4);
   ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+  if (P.shield){
+    ctx.strokeStyle = `rgba(159,232,255,${0.55 + 0.25 * Math.sin(tick * 0.2)})`; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(P.x, P.y, P.r * 2.1, 0, TAU); ctx.stroke();
+  }
   ctx.save(); ctx.translate(P.x, P.y + bob);
   if (flip) ctx.scale(-1, 1);
   ctx.drawImage(P.inv > 0 && P.dash <= 0 ? tinted(img, '#ff3d6e', 0.35) : img, -w / 2, -h / 2, w, h);
@@ -383,7 +398,7 @@ function drawDarkness(ox, oy){
   for (let i = 0; i < projs.length; i += Math.max(1, projs.length / 120 | 0)) light(projs[i].x, projs[i].y, 60);
   for (const p of particles) if (p.ring) light(p.x, p.y, p.r * 1.4);
   for (const b of beams) light((b.x1 + b.x2) / 2, (b.y1 + b.y2) / 2, 160);
-  for (const h of nearProps) if (h.kind === 'lava' || h.kind === 'altar' || h.kind === 'resonator') light(h.x, h.y, h.kind === 'lava' ? h.r * 1.3 : 70);
+  for (const h of nearProps) if (h.kind === 'lava' || h.kind === 'altar' || h.kind === 'shrine' || h.kind === 'resonator') light(h.x, h.y, h.kind === 'lava' ? h.r * 1.3 : 70);
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.drawImage(dark, 0, 0);
   // в темноте видны только злые глазки

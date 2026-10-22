@@ -52,6 +52,7 @@ function genChunk(cx, cy){
     if (p) ch.props.push({ kind: BIOMES[RUN.biome].hazard, x: p[0], y: p[1], r, t: R() * 360 | 0, seed: R() });
   }
   if (!home && R() < 0.16){ const p = place(60, 8); if (p) ch.props.push({ kind: 'altar', x: p[0], y: p[1], r: 34, prog: 0, used: false }); }
+  if (!home && R() < 0.06){ const p = place(60, 8); if (p) ch.props.push({ kind: 'shrine', x: p[0], y: p[1], r: 34, prog: 0, used: false }); }
   // редкие места для питомцев: гнездо драконыша и древо совы
   if (!home && R() < 0.08){ const p = place(70, 8); if (p) ch.props.push({ kind: 'nest', x: p[0], y: p[1], r: 40, prog: 0, used: false }); }
   if (!home && R() < 0.07){
@@ -146,6 +147,7 @@ function damageSolidsIn(x, y, rad, amt){
   for (const s of nearSolids.slice()) if (Math.hypot(s.col.x - x, s.col.y - y) < rad + s.ext * 0.6) damageSolid(s, amt);
 }
 const RESO_LEN = 420; // длина луча резонатора в каждую сторону
+const SHRINE_T = 600; // 10 с у святилища жизни
 function hazards(){
   const P = player;
   P.onIce = false; P.inSand = false;
@@ -214,6 +216,14 @@ function hazards(){
         h.prog++;
         if (h.prog % 22 === 0) tone(400 + h.prog * 6, 0.12, { vol: 0.04 });
         if (h.prog >= 110){ h.used = true; sfx.rune(); burst(h.x, h.y, 40, '#ffd25a', 6); openPick('altar'); }
+      } else h.prog = Math.max(0, h.prog - 2);
+    } else if (h.kind === 'shrine' && !h.used){
+      // святилище жизни: простой у него 10 с — получишь лишнее возрождение
+      if (pd < h.r + P.r){
+        if (h.prog === 0) banner('💗 Стой у святилища 10 с — получишь возрождение', '#ff8fb8');
+        h.prog++;
+        if (h.prog % 60 === 0) tone(300 + h.prog / 2, 0.12, { type: 'triangle', vol: 0.04 });
+        if (h.prog >= SHRINE_T){ h.used = true; lives++; sfx.level(); burst(h.x, h.y, 40, '#ff6fa8', 6); banner('💗 +1 ВОЗРОЖДЕНИЕ', '#ff8fb8'); }
       } else h.prog = Math.max(0, h.prog - 2);
     }
   }

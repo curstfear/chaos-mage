@@ -65,7 +65,8 @@ body.touch .sk.locked{display:none}
   .cols{grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) auto;gap:12px}
   .runePane{overflow:visible;padding:8px 2px 0;border-top:2px solid #2e2358}
   .inv{max-height:min(27vh,172px)}
-  #tip{margin-top:10px;padding:9px 11px;font-size:13.5px;min-height:0}
+  #tip{margin-top:10px;padding:9px 11px;font-size:13.5px;min-height:0;height:124px;box-sizing:border-box;overflow-y:auto}
+  body.touch .craftSub{display:none}
   .foot{margin-top:12px}
   .slot.locked{padding:6px 12px}.slot.locked .hd{margin:0}
 }
@@ -74,6 +75,7 @@ body.touch .sk.locked{display:none}
   .cols{grid-template-columns:1.5fr 1fr;grid-template-rows:minmax(0,1fr);gap:14px}
   .craftSub{display:none}
   .runePane{overflow:auto;border-top:0;padding:4px}
+  #tip{height:auto}
   .inv{max-height:none}
   /* «Как играть»: подсказки в две колонки, чтобы кнопка влезла без прокрутки */
   #helpM .box{max-width:760px!important}

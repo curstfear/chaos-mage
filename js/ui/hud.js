@@ -18,7 +18,7 @@ function updHud(){
   if (weather.type !== 'clear') tags.push(`${weatherName(weather.type)} ${Math.ceil(weather.t / 60)} с`);
   if (goldT > 0) tags.push(`✨ золотой час ${Math.ceil(goldT / 60)} с`);
   $('tags').innerHTML = tags.join('<br>');
-  const pi = pets.map(p => PETS[p.id].icon).join('') + (hasFeather ? '🪶' : '');
+  const pi = pets.map(p => PETS[p.id].icon).join('') + (hasFeather ? '🪶' : '') + '💗'.repeat(lives);
   if ($('petsUI').textContent !== pi) $('petsUI').textContent = pi;
   const un = unlocked();
   $('skillbar').innerHTML = slots.map((s, i) => {

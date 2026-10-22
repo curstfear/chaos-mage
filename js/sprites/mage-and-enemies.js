@@ -278,6 +278,23 @@ function altarSprite(){
   outline(b, OUT);
   return toCanvas(b);
 }
+// святилище жизни: розовый камень, над ним парит сердце
+function shrineSprite(){
+  const b = PB(24, 14);
+  disc(b, 12, 9, 11.5, 4.6, '#4a2a44'); disc(b, 12, 8, 10.5, 3.8, '#7a4a70', '#4a2a44');
+  rect(b, 6, 3, 12, 5, '#8a4a78'); rect(b, 6, 3, 12, 1, '#c87aa8'); rect(b, 14, 3, 4, 5, '#5a2a50', '#8a4a78');
+  pset(b, 9, 5, '#ff6fa8'); pset(b, 12, 5, '#ff6fa8'); pset(b, 15, 5, '#ff6fa8');
+  outline(b, OUT);
+  return toCanvas(b);
+}
+function heartSprite(){
+  const b = PB(11, 10);
+  ['.##...##.', '####.####', '#########', '#########', '.#######.', '..#####..', '...###...', '....#....']
+    .forEach((row, y) => [...row].forEach((ch, x) => { if (ch === '#') pset(b, x + 1, y + 1, y < 3 ? '#ff7ab0' : '#e0306e'); }));
+  pset(b, 2, 2, '#ffffff'); pset(b, 3, 2, '#ffd0e4');
+  outline(b, OUT);
+  return toCanvas(b);
+}
 function gemSprite(){
   const b = PB(10, 14);
   tri(b, 5, 0, 0, 6, 10, 6, '#ffe08a'); tri(b, 0, 6, 10, 6, 5, 14, '#e8b84a'); tri(b, 5, 0, 10, 6, 5, 6, '#c99a2a', '#ffe08a');

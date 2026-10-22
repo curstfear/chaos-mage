@@ -75,4 +75,6 @@ function doDash(tx, ty){
   player.vx = dx / d * 13; player.vy = dy / d * 13;
   player.dash = 11; player.dashCd = Math.round(48 * PACT.dashCd); player.inv = Math.max(player.inv, PACT.dashInv);
   sfx.dash();
+  // «На бегу»: навыки с ней срабатывают от рывка
+  compiled.forEach((c, i) => { if (c && c.onrun) cast(i, player.x, player.y, Math.atan2(player.vy, player.vx), 0, true); });
 }

@@ -37,6 +37,8 @@ function startRun(){
   showModal('pactM');
 }
 $('againBtn').onclick = startRun;
+$('reviveBtn').onclick = () => buyRevive();
+$('giveUpBtn').onclick = () => { if (state === 'revive'){ showModal(null); die(); } };
 $('craftClose').onclick = closeModal;
 $('resumeBtn').onclick = closeModal;
 
@@ -69,8 +71,9 @@ function renderPetList(){
 }
 
 // мастерская
-// Два пути: нажать руну → подсветятся подходящие ячейки; или нажать ячейку → в списке останутся только руны её типа,
-// нажатие на руну сразу вставит её. Занятую ячейку руна заменяет, а снять руну можно кнопкой в подсказке.
+// Два пути: нажать руну → подсветятся подходящие ячейки; или нажать ячейку → в списке останутся только руны её типа:
+// первое нажатие на руну показывает, что она делает, второе (или кнопка «Вставить») — ставит её.
+// Занятую ячейку руна заменяет, а снять руну можно кнопкой в подсказке.
 let selRune = -1, selSock = null, invFilter = 'all';
 const sockGet = ({ s, k, i }) => k === 'form' ? slots[s].form : k === 'el' ? slots[s].element : slots[s].mods[i];
 const sockSet = ({ s, k, i }, v) => { if (k === 'form') slots[s].form = v; else if (k === 'el') slots[s].element = v; else slots[s].mods[i] = v; };
@@ -110,23 +113,27 @@ function renderCraft(){
   document.querySelectorAll('#invTabs .itab').forEach(el => el.onclick = () => { invFilter = el.dataset.f; selSock = null; sfx.click(); renderCraft(); });
   document.querySelectorAll('#invUI .rune').forEach(el => {
     const ri = +el.dataset.ri, r = inventory[ri];
-    el.onmouseenter = () => tip(r);
+    el.onmouseenter = () => { if (selRune < 0) tip(r); }; // выбранную руну с кнопкой «Вставить» не затираем
     el.onclick = () => clickRune(ri);
   });
   document.querySelectorAll('.sock').forEach(el => {
-    el.onmouseenter = () => { if (el.dataset.r) tip(el.dataset.r); };
+    el.onmouseenter = () => { if (el.dataset.r && selRune < 0 && !selSock) tip(el.dataset.r); };
     el.onclick = () => clickSocket({ s: +el.dataset.s, k: el.dataset.k, i: +el.dataset.i }, el);
   });
   renderTip();
 }
 // подсказка показывает то, что сейчас выбрано
 function renderTip(){
-  if (selSock){
+  if (selSock && selRune >= 0){
+    tip(inventory[selRune]);
+    $('tip').innerHTML += `<div class="tipAct"><button class="pbtn" id="sockPut">⤵ ВСТАВИТЬ</button><span>или нажми руну ещё раз</span></div>`;
+    $('sockPut').onclick = () => clickRune(selRune);
+  } else if (selSock){
     const cur = sockGet(selSock), kind = TYPE_NAME[selSock.k];
     $('tip').innerHTML = `<b>Слот ${selSock.s + 1} · ячейка «${kind}»</b>` +
       (cur ? `${RUNES[cur].icon} ${RUNES[cur].name} — ${RUNES[cur].desc}<br>` : '') +
-      (inventory.some(r => RUNES[r].type === selSock.k) ? (cur ? 'Нажми руну выше, чтобы заменить.' : 'Нажми руну выше, чтобы вставить.') : `Нет свободных рун этого типа.`) +
-      (cur ? `<button class="pbtn alt" id="sockTake">↩ СНЯТЬ РУНУ</button>` : '');
+      (inventory.some(r => RUNES[r].type === selSock.k) ? (cur ? 'Выбери руну выше на замену.' : 'Выбери руну выше.') : `Нет свободных рун этого типа.`) +
+      (cur ? `<div class="tipAct"><button class="pbtn alt" id="sockTake">↩ СНЯТЬ РУНУ</button></div>` : '');
     if ($('sockTake')) $('sockTake').onclick = () => {
       inventory.push(sockGet(selSock)); sockSet(selSock, null);
       afterChange(selSock.s);
@@ -159,6 +166,8 @@ function clickRune(ri){
   const r = inventory[ri];
   if (selSock){
     if (RUNES[r].type !== selSock.k) return;
+    // первое нажатие — только выбор и описание, второе — вставка
+    if (selRune !== ri){ selRune = ri; sfx.click(); renderCraft(); return; }
     placeRune(selSock, ri);
     const si = selSock.s;
     // модификаторов в слоте три: после вставки сразу переходим к следующему пустому

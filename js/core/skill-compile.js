@@ -17,7 +17,8 @@ function compile(s, extra){
     trigger: n('trigger'), mirror: n('mirror'), spiral: n('spiral'), detonate: n('detonate'), execute: n('execute'),
     mark: n('mark'), berserk: n('berserk'), resonance: n('resonance'), wild: n('wild'), gravity: n('gravity'),
     vampiric: n('vampiric'), keen: n('keen'), snowball: n('snowball'), returner: n('returner'), reflect: n('reflect'), momentum: n('momentum'),
-    sniper: n('sniper'), stun: n('stun')
+    sniper: n('sniper'), stun: n('stun'), jackpot: n('jackpot'), adrenaline: n('adrenaline'), portal: n('portal'),
+    barrier: n('barrier'), onrun: n('onrun'), revenge: n('revenge')
   };
 }
 function recompile(){

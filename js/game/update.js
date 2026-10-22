@@ -16,7 +16,7 @@ function update(){
   trailStep(mageTrail, 2 * P.r / 14);
   if (RUN.pact === 'wind'){ P.x += wind.x * 0.9; P.y += wind.y * 0.9; }
   if (pushOut(P, P.r * 0.8) && P.dash > 0) sfx.thud();
-  if (P.dashCd > 0) P.dashCd--; if (P.inv > 0) P.inv--;
+  if (P.dashCd > 0) P.dashCd--; if (P.inv > 0) P.inv--; if (P.barrierCd > 0) P.barrierCd--;
   if (RUN.pact === 'vampire') P.hp -= 1.2 / 60; else P.hp = Math.min(P.maxHp, P.hp + 0.006 + PACT.regen / 60);
   if (TOUCH) updateAutoAim();
   const [ax, ay] = aimWorld(); P.face = Math.atan2(ay - P.y, ax - P.x);
@@ -339,6 +339,15 @@ function update(){
       if (Math.random() < 0.3) particles.push({ x: e.x + rnd(-e.r, e.r) * 0.6, y: e.y, vx: 0, vy: -1.2, life: 20, max: 20, color: '#ff7a2e', r: 2.5 });
     }
     if (e.debt && --e.debt.t <= 0) payDebt(e);
+    if (e.plague > 0){
+      e.plague--;
+      if (e.plague % 30 === 0) damage(e, e.plagueDmg, '#a8d84a', e.plagueSlot);
+      if (Math.random() < 0.15) particles.push({ x: e.x + rnd(-e.r, e.r) * 0.6, y: e.y, vx: 0, vy: -0.6, life: 24, max: 24, color: '#a8d84a', r: 2 });
+    }
+    if (e.magmaT > 0){
+      if (Math.random() < 0.3) particles.push({ x: e.x + rnd(-5, 5), y: e.y - e.r * 0.3, vx: rnd(-1, 1), vy: -1.5, life: 14, max: 14, color: '#ffb02a', r: 2.5 });
+      if (--e.magmaT === 0 && !e.dead) magmaBlast(e);
+    }
     if (e.dead || e.static){
       if (e.static && Math.hypot(P.x - e.x, P.y - e.y) > 2400) e.dead = true;
       continue;
@@ -471,7 +480,7 @@ function update(){
   if (shake > 0) shake *= 0.85;
   if (shake < 0.3) shake = 0;
 
-  if (P.hp <= 0){ if (hasFeather) revive(); else if (lives > 0) secondWind(); else { die(); return; } }
+  if (P.hp <= 0){ if (hasFeather) revive(); else if (lives > 0) secondWind(); else if (META.shards >= reviveCost()){ offerRevive(); return; } else { die(); return; } }
   if (pendingLevels > 0 && state === 'play') openPick('level');
 }
 function hurt(d){
@@ -480,21 +489,47 @@ function hurt(d){
     nums.push({ x: player.x, y: player.y - player.r - 10, v: 'уклон!', t: 40, color: '#9dffb0' });
     return;
   }
+  // «Барьер» поглощает удар целиком
+  if (player.shield){
+    player.shield = false; player.inv = 30;
+    ring(player.x, player.y, 40, '#9fe8ff'); burst(player.x, player.y, 14, '#9fe8ff', 4); sfx.crystal();
+    return;
+  }
   if (hasPet('guard')) d *= 0.75;
   d *= PACT.armor;
   mom.fill(0);
   player.hp -= d; player.inv = Math.round(40 * PACT.iframes); shake = Math.max(shake, 6);
   burst(player.x, player.y, 14, '#ff3d6e', 5);
   sfx.hurt();
+  // «Месть»: навыки с ней срабатывают в ответ
+  if (player.hp > 0) compiled.forEach((c, i) => { if (c && c.revenge) cast(i, player.x, player.y, player.face, 0, true); });
 }
-// «Второе дыхание» из прокачки
-function secondWind(){
+function rise(text, color){
   const P = player;
-  lives--;
   P.hp = P.maxHp * 0.5; P.inv = 150;
-  burst(P.x, P.y, 60, '#ffffff', 8);
-  banner('🕊️ ВТОРОЕ ДЫХАНИЕ!', '#ffffff');
+  burst(P.x, P.y, 60, color, 8);
+  banner(text, color);
   sfx.level();
+}
+// запасная жизнь: «Второе дыхание» из прокачки или святилище жизни
+function secondWind(){
+  lives--;
+  rise(`🕊️ ВТОРОЕ ДЫХАНИЕ!${lives ? ` (ещё ${lives})` : ''}`, '#ffffff');
+}
+// возрождение за осколки — только когда запасных жизней не осталось; каждое следующее вдвое дороже
+const reviveCost = () => 50 * 2 ** shardRevives;
+function offerRevive(){
+  setState('revive');
+  $('reviveCost').textContent = reviveCost();
+  $('reviveHave').textContent = META.shards;
+  tone(300, 0.6, { type: 'sawtooth', vol: 0.06, to: 120 });
+  showModal('reviveM');
+}
+function buyRevive(){
+  if (state !== 'revive' || META.shards < reviveCost()) return;
+  META.shards -= reviveCost(); shardRevives++; saveMeta();
+  showModal(null); setState('play');
+  rise('💠 ХАОС ВЕРНУЛ ТЕБЯ!', '#9ff0ff');
 }
 function die(){
   setState('dead');

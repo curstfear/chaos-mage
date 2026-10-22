@@ -80,6 +80,21 @@ function hitEnemy(e, src, dmg, x, y){
                      trigger: 0, split: 0, gravity: 0, detonate: 0, triggered: true, geyser: false });
   }
   else if (el === 'acid'){ e.acid = Math.min(10, (e.acid || 0) + 1); e.acidT = 300; }
+  else if (el === 'plague') infect(e, dmg * 0.12, src.slot);
+  else if (el === 'time'){
+    // удар отдаётся эхом через секунду; само эхо больше не повторяется
+    if (!e.static && !e.boss) e.stunT = Math.max(e.stunT || 0, 14);
+    if (!src.timeEcho && scheduled.length < 400){
+      const echo = { ...src, timeEcho: true, trigger: 0, split: 0, gravity: 0, triggered: true };
+      scheduled.push({ t: 60, fn: () => { if (!e.dead){ ring(e.x, e.y, 22, '#c8b8ff'); hitEnemy(e, echo, dmg * 0.6, e.x, e.y); } } });
+    }
+  }
+  else if (el === 'sound'){
+    let n = 0;
+    near(x, y, 75, o => { if (o !== e && !o.static && !o.dead && n++ < 6) damage(o, dmg * 0.35, '#ffb0e0', src.slot); });
+    if (can('snd', 90)) ring(x, y, 75, '#ffb0e0');
+  }
+  else if (el === 'magma'){ if (!e.magmaT && Math.random() < 0.3){ e.magmaT = 90; e.magmaDmg = dmg * 1.2; e.magmaSlot = src.slot; } }
   else if (el === 'earth'){ if (!e.static && !e.boss && Math.random() < 0.35) e.stunT = 42; }
   else if (el === 'fire'){ e.burn = weather.type === 'rain' ? 60 : 180; e.burnDmg = Math.max(e.burnDmg, dmg * 0.18); }
   else if (el === 'ice') e.slow = 130;
@@ -104,6 +119,17 @@ function hitEnemy(e, src, dmg, x, y){
     const dd = Math.hypot(dx, dy) || 1, k = e.boss ? 3 : 16;
     e.x += dx / dd * k; e.y += dy / dd * k;
   }
+}
+// «Чума»: гниение тикает в update(), при смерти зараза перескакивает на соседей
+function infect(e, dps, slot){
+  if (e.static) return;
+  e.plague = 300; e.plagueDmg = Math.max(e.plagueDmg || 0, dps); e.plagueSlot = slot;
+}
+// «Магма»: заряд во враге рвётся по всем вокруг
+function magmaBlast(e){
+  const d = e.magmaDmg, slot = e.magmaSlot; e.magmaT = 0;
+  near(e.x, e.y, 75, o => { if (!o.static && !o.dead) damage(o, d, '#ff5a2a', slot); });
+  ring(e.x, e.y, 75, '#ff5a2a'); burst(e.x, e.y, 16, '#ff9a2a', 5); sfx.boom(60);
 }
 function onImpact(src, x, y){
   // «Гравитация»: мини-чёрная дыра в точке удара, один раз на снаряд
@@ -164,6 +190,16 @@ function kill(e){
   e.dead = true;
   const src = e.lastSrc;
   if (e.type === 'bomber') bomberBlast(e, false);
+  if (e.magmaT > 0) magmaBlast(e);
+  if (e.plague > 0){
+    const done = new Set([e]);
+    for (let k = 0; k < 3; k++){
+      const t = nearest(e.x, e.y, 150, done); if (!t) break;
+      done.add(t);
+      if (!t.static && !(t.plague > 0)){ infect(t, e.plagueDmg, e.plagueSlot); zaps.push({ x1: e.x, y1: e.y, x2: t.x, y2: t.y, life: 8, c: '#a8d84a' }); }
+    }
+  }
+  if (src && src.adrenaline) for (let k = 0; k < cds.length; k++) cds[k] = Math.max(1, cds[k] - 12 * src.adrenaline);
   // долг умершего не пропадает: взрывается по соседям
   if (e.debt && e.debt.sum > 1){
     const D = e.debt; e.debt = null;
@@ -210,6 +246,12 @@ function kill(e){
       explode({ ...src, dmg: src.dmg * 0.5, depth: src.depth + 1, trigger: 0, split: 0, triggered: true }, e.x, e.y, 55 * src.size);
     }
     if (src.el === 'blood') player.hp = Math.min(player.maxHp, player.hp + 1);
+    // дух убитого летит к ближайшему врагу; сам он новых духов не выпускает
+    if (src.el === 'spirit' && !src.child && projs.length < 700){
+      const a = rnd(0, TAU);
+      spawnProj({ ...src, kind: 'bolt', x: e.x, y: e.y, vx: Math.cos(a) * 4, vy: Math.sin(a) * 4, r: 5 * (src.size || 1), life: 110, curve: 0,
+                  dmg: src.dmg * 0.7, child: true, homing: 3, split: 0, trigger: 0, pierce: 0, bounce: 0, boom: 0, wig: 0, lance: false, hit: new Set([e]) });
+    }
     if (src.el === 'bone' && !src.child && projs.length < 700){
       const off = rnd(0, TAU);
       for (let k = 0; k < 3; k++){

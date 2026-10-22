@@ -3,6 +3,7 @@ function nextSlot(i){
   for (let k = 1; k <= NSLOTS; k++){ const j = (i + k + NSLOTS) % NSLOTS; if (compiled[j]) return j; }
   return -1;
 }
+const jackN = []; // счётчик кастов для «Джекпота» по слотам
 function spawnProj(p){ if (projs.length < 900) projs.push(p); }
 // масти «Колоды»: значок и цвет карты
 const SUITS = { spade: { g: '♠', c: '#e8e0ff' }, heart: { g: '♥', c: '#ff4f6e' }, diamond: { g: '♦', c: '#ffd25a' }, club: { g: '♣', c: '#7fe8ff' } };
@@ -14,6 +15,13 @@ function cast(i, ox, oy, ang, depth, isEcho, Sover){
   if (depth === 0) sfx.cast(S.form, S.el);
   // «Нарастание»: каждый свой каст копит бонус урона, ранение сбрасывает
   let dmgMul = 1;
+  // «Джекпот»: каждый 5-й свой каст — тройной урон и вдвое крупнее
+  if (S.jackpot && i >= 0 && depth === 0 && !isEcho && (jackN[i] = (jackN[i] || 0) + 1) % 5 === 0){
+    S = { ...S, dmg: S.dmg * 3, size: S.size * 2 };
+    ring(ox, oy, 60, '#ffd700'); nums.push({ x: ox, y: oy - 40, v: '🎰 ×3', t: 50, color: '#ffd700', crit: true }); sfx.gold();
+  }
+  // «Барьер»: щит на один удар
+  if (S.barrier && i >= 0 && depth === 0 && !player.shield && player.barrierCd <= 0){ player.shield = true; player.barrierCd = 480; ring(player.x, player.y, 34, '#9fe8ff'); }
   if (S.momentum && i >= 0){
     if (depth === 0 && !isEcho) mom[i] = Math.min(25, mom[i] + 1);
     dmgMul = Math.min(2, 1 + 0.04 * mom[i] * S.momentum);
@@ -22,6 +30,7 @@ function cast(i, ox, oy, ang, depth, isEcho, Sover){
                  split: S.split, trigger: S.trigger, size: S.size, speed: S.speed, range: S.range, detonate: S.detonate, execute: S.execute,
                  mark: S.mark, berserk: S.berserk, gravity: S.gravity, child: false,
                  vampiric: S.vampiric, keen: S.keen, snowball: S.snowball, returner: S.returner, reflect: S.reflect, sniper: S.sniper, stun: S.stun,
+                 adrenaline: S.adrenaline,
                  // общий счётчик на весь каст: дыр не больше, чем рун «Гравитация»
                  gravGroup: S.gravity ? { n: 0 } : null };
   let ax, ay;
@@ -111,6 +120,24 @@ function cast(i, ox, oy, ang, depth, isEcho, Sover){
           const a = A + (k - (n - 1) / 2) * 0.3;
           spawnProj({ ...base, kind: 'saw', x: ox, y: oy, vx: Math.cos(a) * 4 * S.speed, vy: Math.sin(a) * 4 * S.speed,
                       r: 15 * S.size, life: 200 * S.range, spin: 0, hcd: new Map(), hit: new Set() });
+        }
+      } break;
+      case 'swarm': {
+        const n = 5 + 2 * S.multi;
+        for (let k = 0; k < n; k++){
+          const a = A + rnd(-1.3, 1.3);
+          spawnProj({ ...base, kind: 'bolt', x: ox, y: oy, vx: Math.cos(a) * 5 * S.speed, vy: Math.sin(a) * 5 * S.speed, r: 4 * S.size,
+                      life: 150 * S.range, curve: 0, homing: base.homing + 2, pierce: base.pierce + 1, hit: new Set() });
+        }
+      } break;
+      case 'hail': {
+        // льдинки целятся во врагов рядом, остальные — куда попало; цепочки и раскол — только от первой
+        const n = 10 + 4 * S.multi, R = 240 * Math.sqrt(S.size), near = enemies.filter(e => !e.dead && !e.static && Math.hypot(e.x - ox, e.y - oy) < R);
+        for (let k = 0; k < n; k++){
+          const t = near.length ? pick(near) : null, a = rnd(0, TAU), d = Math.sqrt(Math.random()) * R;
+          meteors.push({ ...base, x: t ? t.x + rnd(-12, 12) : ox + Math.cos(a) * d, y: t ? t.y + rnd(-12, 12) : oy + Math.sin(a) * d,
+                         t: 10 + k * 9, max: 10 + k * 9, rad: 34 * S.size, size: 0.4 * S.size,
+                         trigger: k ? 0 : base.trigger, split: k ? 0 : base.split, gravity: k ? 0 : base.gravity });
         }
       } break;
       case 'starfall': {
@@ -280,6 +307,15 @@ function cast(i, ox, oy, ang, depth, isEcho, Sover){
           spawnProj({ ...base, kind: 'fam', x: ox, y: oy, ang: k / n * TAU + turn, mode: 'orbit', t: 20 + k * 12, life: depth ? 160 : 300,
                       r: 10 * S.size, home: depth === 0 && i >= 0, ax: ox, ay: oy, hcd: new Map(), hit: new Set() });
       } break;
+    }
+  }
+  // «Портал»: тот же навык ещё раз — из-за спины ближайшего врага, лицом к нему
+  if (S.portal && !isEcho && depth === 0 && i >= 0){
+    const t = nearest(player.x, player.y, 520);
+    if (t){
+      const a = Math.atan2(t.y - player.y, t.x - player.x), px = t.x + Math.cos(a) * 70, py = t.y + Math.sin(a) * 70;
+      ring(px, py, 30, '#b46bff'); burst(px, py, 10, '#b46bff', 3);
+      for (let k = 0; k < S.portal; k++) cast(i, px, py, a + Math.PI, 1, true);
     }
   }
   if (S.echo && !isEcho)

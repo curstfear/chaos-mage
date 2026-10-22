@@ -136,7 +136,7 @@
     <div class="runePane">
       <div class="invHead"><b>Твои руны</b><div class="invTabs" id="invTabs"></div></div>
       <div class="inv scroll" id="invUI"></div>
-      <div id="tip"></div>
+      <div id="tip" class="scroll"></div>
       <div class="legend kb"><i style="background:var(--form)"></i>форма — что это за навык<br><i style="background:var(--el)"></i>стихия — чем бьёт<br><i style="background:var(--mod)"></i>модификатор — как усиливается (можно повторять!)</div>
     </div>
   </div>
@@ -167,6 +167,14 @@
     <button class="opt" data-opt="shake"></button>
   </div>
   <div class="btnrow"><button class="pbtn" id="resumeBtn">ПРОДОЛЖИТЬ</button><button class="pbtn alt" id="endRunBtn">ЗАВЕРШИТЬ ЗАБЕГ</button></div>
+</div></div>
+
+<!-- возрождение за осколки: появляется, когда кончились все запасные жизни -->
+<div id="reviveM" class="modal"><div class="box frame center" style="max-width:460px">
+  <div style="font-size:52px">💔</div>
+  <h2 class="ttl">МАГ ПАЛ… ПОЧТИ</h2>
+  <div class="sub">Хаос вернёт тебя в бой за 💠 <b id="reviveCost"></b> осколков.<br>У тебя 💠 <span id="reviveHave"></span>. Каждое следующее возрождение — вдвое дороже.</div>
+  <div class="btnrow"><button class="pbtn" id="reviveBtn">💠 ВОЗРОДИТЬСЯ</button><button class="pbtn alt" id="giveUpBtn">СДАТЬСЯ</button></div>
 </div></div>
 
 <div id="deadM" class="modal"><div class="box frame center" style="max-width:520px">

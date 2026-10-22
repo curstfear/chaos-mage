@@ -89,6 +89,8 @@ const sfx = {
       case 'bait': [784, 988, 1175].forEach((f, k) => tone(f * p, 0.18, { type: 'square', vol: 0.025, delay: k * 0.07 })); break;
       case 'sigil': tone(220 * p, 0.8, { type: 'triangle', vol: 0.06, att: 0.05 }); tone(330 * p, 0.8, { vol: 0.04, att: 0.1, delay: 0.1 }); break;
       case 'shadow': tone(180 * p, 0.6, { type: 'sawtooth', vol: 0.04, to: 90 * p }); break;
+      case 'swarm': tone(220 * p, 0.35, { type: 'sawtooth', vol: 0.025, to: 240 * p }); tone(330 * p, 0.3, { type: 'square', vol: 0.012, delay: 0.04 }); break;
+      case 'hail': noise(0.4, { type: 'highpass', f: 3500, to: 1800, vol: 0.06 }); break;
     }
   },
   turretShot(){ if (can('ts', 60)) tone(1100, 0.05, { type: 'square', vol: 0.02, to: 700 }); },
