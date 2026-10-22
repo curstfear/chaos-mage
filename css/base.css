@@ -1,0 +1,13 @@
+:root{--ink:#0b0618;--panel:#1d1438;--panel2:#291d50;--edge:#4a3a86;--gold:#e8b84a;--gold2:#ffe08a;--gold3:#9c6a1c;
+  --txt:#f3ecff;--dim:#a99cc9;--form:#5fd3ff;--el:#ff8a4a;--mod:#c48bff;--hp:#ff3d6e;
+  --pix:"Pixelify Sans",ui-monospace,monospace;--big:"Press Start 2P",ui-monospace,monospace}
+html,body{margin:0;height:100%;background:#07060f;overflow:hidden;color:var(--txt);font-family:var(--pix);user-select:none;-webkit-user-select:none}
+canvas#c{display:block;cursor:none;image-rendering:pixelated}
+/* пиксельная рамка с золотой окантовкой */
+.frame{position:relative;background:linear-gradient(180deg,var(--panel2),var(--panel));border:3px solid var(--ink);
+  box-shadow:inset 0 0 0 2px var(--edge),inset 0 4px 0 2px rgba(255,255,255,.06),0 0 0 3px var(--gold),0 0 0 6px var(--ink),0 9px 0 6px rgba(0,0,0,.35)}
+.frame::before,.frame::after{content:"";position:absolute;width:9px;height:9px;background:var(--gold2);box-shadow:0 0 0 3px var(--ink);transform:rotate(45deg);top:-8px;z-index:2}
+.frame::before{left:-8px}.frame::after{right:-8px}
+.ttl{font-family:var(--big);color:var(--gold2);text-shadow:3px 3px 0 var(--ink),0 0 14px rgba(255,200,80,.35);letter-spacing:.02em;line-height:1.4}
+.badge{display:inline-block;font-family:var(--big);font-size:9px;color:var(--ink);background:var(--gold);padding:5px 7px 4px;box-shadow:0 0 0 2px var(--ink),inset -2px -2px 0 var(--gold3);vertical-align:5px;margin-left:10px}
+kbd{display:inline-block;font-family:var(--big);font-size:9px;color:var(--txt);background:#2c2150;padding:5px 7px 4px;box-shadow:0 0 0 2px var(--ink),inset -2px -3px 0 #160f2c,inset 2px 2px 0 #4a3a86;margin:0 2px}
