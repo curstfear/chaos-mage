@@ -7,6 +7,8 @@ const jackN = []; // счётчик кастов для «Джекпота» п�
 function spawnProj(p){ if (projs.length < 900) projs.push(p); }
 // масти «Колоды»: значок и цвет карты
 const SUITS = { spade: { g: '♠', c: '#e8e0ff' }, heart: { g: '♥', c: '#ff4f6e' }, diamond: { g: '♦', c: '#ffd25a' }, club: { g: '♣', c: '#7fe8ff' } };
+// цвета искр «Салюта» и лучей «Диско-шара»
+const FIREWORK = ['#ff4f8b', '#ffe08a', '#7fe8ff', '#9dff7a', '#ff9ff3', '#ffb347'];
 function cast(i, ox, oy, ang, depth, isEcho, Sover){
   let S = Sover || compiled[i]; if (!S) return;
   if (S.wild && !Sover){ const ex = []; for (let k = 0; k < 2 * S.wild; k++) ex.push(pick(SAFE_WILD)); S = compile(slots[i], ex); }
@@ -30,7 +32,7 @@ function cast(i, ox, oy, ang, depth, isEcho, Sover){
                  split: S.split, trigger: S.trigger, size: S.size, speed: S.speed, range: S.range, detonate: S.detonate, execute: S.execute,
                  mark: S.mark, berserk: S.berserk, gravity: S.gravity, child: false,
                  vampiric: S.vampiric, keen: S.keen, snowball: S.snowball, returner: S.returner, reflect: S.reflect, sniper: S.sniper, stun: S.stun,
-                 adrenaline: S.adrenaline,
+                 adrenaline: S.adrenaline, doll: S.doll,
                  // общий счётчик на весь каст: дыр не больше, чем рун «Гравитация»
                  gravGroup: S.gravity ? { n: 0 } : null };
   let ax, ay;
@@ -300,6 +302,48 @@ function cast(i, ox, oy, ang, depth, isEcho, Sover){
           spawnProj({ ...base, kind: 'shade', follow: depth === 0 && i >= 0, x: ox, y: oy, beat: 40, every: Math.max(18, 40 - 8 * S.multi),
                       R: 95 * Math.sqrt(S.size), life: 360, max: 360, hit: new Set() });
         }
+      } break;
+      case 'lasso': {
+        // хватаем ближайших к себе врагов (не боссов и не тех, кого уже крутят)
+        let busy = 0; const done = new Set();
+        for (const p of projs) if (p.kind === 'lasso' && p.life > 0){ busy++; done.add(p.tgt); }
+        const n = Math.min(1 + S.multi, 3 + S.multi - busy);
+        for (let k = 0; k < n; k++){
+          let t = null, bd = 330 * S.range;
+          for (const e of enemies){
+            if (e.dead || e.static || e.boss || e.fly > 0 || done.has(e)) continue;
+            const d = Math.hypot(e.x - ox, e.y - oy); if (d < bd){ bd = d; t = e; }
+          }
+          if (!t) break;
+          done.add(t);
+          spawnProj({ ...base, kind: 'lasso', tgt: t, home: depth === 0 && i >= 0, ax: ox, ay: oy, ang: Math.atan2(t.y - oy, t.x - ox) + turn,
+                      R: 85 * Math.sqrt(S.size), life: 80, max: 80, r: 10, hcd: new Map(), hit: new Set([t]) });
+        }
+      } break;
+      case 'pong': {
+        const n = 1 + S.multi;
+        for (let k = 0; k < n; k++){
+          const a = A + (k - (n - 1) / 2) * 0.4;
+          spawnProj({ ...base, kind: 'pong', x: ox, y: oy, vx: Math.cos(a) * 8 * S.speed, vy: Math.sin(a) * 8 * S.speed, v: 8 * S.speed,
+                      r: 7 * S.size, hits: 0, last: null, tgt: null, life: 150 * S.range, hit: new Set() });
+        }
+      } break;
+      case 'firework': {
+        const n = 1 + S.multi;
+        for (let k = 0; k < n; k++){
+          let mx = tx + (k ? rnd(-120, 120) : 0), my = ty + (k ? rnd(-120, 120) : 0); const d = Math.hypot(mx - ox, my - oy);
+          if (d > 420){ mx = ox + (mx - ox) / d * 420; my = oy + (my - oy) / d * 420; }
+          spawnProj({ ...base, kind: 'rocket', x: ox, y: oy, sx: ox, sy: oy, tx: mx, ty: my, life: 34 + k * 6, max: 34 + k * 6, r: 6 * S.size, hit: new Set() });
+        }
+      } break;
+      case 'disco': {
+        if (turn) break;
+        // один шар на всех: новый каст заменяет старый, «Цепь» только продлевает
+        const old = projs.find(p => p.kind === 'disco' && p.life > 0);
+        if (old && depth > 0){ old.life = Math.max(old.life, 150); break; }
+        if (old) old.life = 0;
+        spawnProj({ ...base, kind: 'disco', follow: depth === 0 && i >= 0, x: ox, y: oy, rays: 4 + 2 * S.multi, len: 270 * S.range * Math.sqrt(S.size),
+                    spin: rnd(0, TAU), life: 300, max: 300, hcd: new Map(), hit: new Set() });
       } break;
       case 'familiar': {
         const n = 1 + S.multi;

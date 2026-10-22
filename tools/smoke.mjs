@@ -223,7 +223,9 @@ for (const prof of PROFILES){
       trail: "projs.some(p => p.kind === 'puff')", debt: 'enemies.some(e => e.debt)', tether: 'ties.length > 0',
       seed: "projs.some(p => p.kind === 'seed')", prism: "projs.filter(p => p.kind === 'prism').length === 1",
       bait: "projs.filter(p => p.kind === 'bait').length === 1", sigil: "projs.filter(p => p.kind === 'sigil').length === 1",
-      shadow: "projs.filter(p => p.kind === 'shade').length === 1"
+      shadow: "projs.filter(p => p.kind === 'shade').length === 1",
+      lasso: "projs.some(p => p.kind === 'lasso') || enemies.some(e => e.fly > 0)", pong: "projs.some(p => p.kind === 'pong' && p.hits > 0)",
+      firework: "projs.some(p => p.kind === 'rocket') || meteors.length > 0", disco: "projs.filter(p => p.kind === 'disco').length === 1"
     };
     for (const [f, check] of Object.entries(FORMS)){
       await g(`level = 12; slots[0] = { form: '${f}', element: 'fire', mods: ['trigger', 'multi', null] };
@@ -259,7 +261,9 @@ for (const prof of PROFILES){
       ["{ form: 'hail', element: 'magma', mods: ['adrenaline', 'onrun', 'revenge'] }", 'meteors.length > 3'],
       ["{ form: 'bolt', element: 'time', mods: ['multi', 'pierce', null] }", 'scheduled.length > 0'],
       ["{ form: 'nova', element: 'sound', mods: [null, null, null] }", 'true'],
-      ["{ form: 'nova', element: 'spirit', mods: ['multi', null, null] }", 'true']
+      ["{ form: 'nova', element: 'spirit', mods: ['multi', null, null] }", 'true'],
+      ["{ form: 'bolt', element: null, mods: ['doll', 'multi', null] }", 'projs.some(p => p.gen > 0)'],
+      ["{ form: 'nova', element: 'charm', mods: ['multi', 'pierce', null] }", 'enemies.some(e => e.sheep > 0)']
     ];
     for (const [slot, check] of CASES){
       await g(`level = 12; slots[0] = ${slot}; slots[1] = { form: null, element: null, mods: [null, null, null] }; recompile(); cds.fill(1); player.shield = false; player.barrierCd = 0;

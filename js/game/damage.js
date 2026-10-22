@@ -94,6 +94,12 @@ function hitEnemy(e, src, dmg, x, y){
     near(x, y, 75, o => { if (o !== e && !o.static && !o.dead && n++ < 6) damage(o, dmg * 0.35, '#ffb0e0', src.slot); });
     if (can('snd', 90)) ring(x, y, 75, '#ffb0e0');
   }
+  else if (el === 'charm'){
+    if (!e.static && !e.boss && !e.wild && !e.fuse && e.type !== 'goblin' && !(e.sheep > 0) && Math.random() < 0.15){
+      e.sheep = 180; burst(e.x, e.y, 16, '#ffc8f0', 4); ring(e.x, e.y, 30, '#ffc8f0');
+      if (can('poof', 120)) tone(900, 0.15, { type: 'triangle', vol: 0.04, to: 1400 });
+    }
+  }
   else if (el === 'magma'){ if (!e.magmaT && Math.random() < 0.3){ e.magmaT = 90; e.magmaDmg = dmg * 1.2; e.magmaSlot = src.slot; } }
   else if (el === 'earth'){ if (!e.static && !e.boss && Math.random() < 0.35) e.stunT = 42; }
   else if (el === 'fire'){ e.burn = weather.type === 'rain' ? 60 : 180; e.burnDmg = Math.max(e.burnDmg, dmg * 0.18); }
@@ -222,7 +228,7 @@ function kill(e){
     if (combo % 200 === 0 && comboRuneCd <= 0) chaosBurst();
   } else sfx.crystal();
   burst(e.x, e.y, e.boss ? 80 : e.static ? 22 : 12, e.color, e.boss ? 9 : 4);
-  const xpv = e.xp * PACT.xp * (moonT > 0 ? 3 : 1) * (goldT > 0 ? 2 : 1) * (src && src.el === 'gold' ? 2 : 1);
+  const xpv = e.xp * PACT.xp * (moonT > 0 ? 3 : 1) * (goldT > 0 ? 2 : 1) * (src && src.el === 'gold' ? 2 : 1) * (e.sheep > 0 ? 2 : 1);
   if (gems.length < 500) gems.push({ x: e.x, y: e.y, v: xpv, kind: e.xp >= 4 ? 'big' : 'xp' });
   else gainXp(xpv);
   if (!e.static && Math.random() < 0.008) gems.push({ x: e.x + 10, y: e.y, kind: 'heart' });

@@ -91,6 +91,10 @@ const sfx = {
       case 'shadow': tone(180 * p, 0.6, { type: 'sawtooth', vol: 0.04, to: 90 * p }); break;
       case 'swarm': tone(220 * p, 0.35, { type: 'sawtooth', vol: 0.025, to: 240 * p }); tone(330 * p, 0.3, { type: 'square', vol: 0.012, delay: 0.04 }); break;
       case 'hail': noise(0.4, { type: 'highpass', f: 3500, to: 1800, vol: 0.06 }); break;
+      case 'lasso': noise(0.3, { type: 'bandpass', f: 500, to: 1500, vol: 0.07, q: 3 }); tone(300 * p, 0.2, { type: 'triangle', vol: 0.03, to: 600 * p }); break;
+      case 'pong': tone(700 * p, 0.05, { type: 'square', vol: 0.03 }); break;
+      case 'firework': noise(0.5, { type: 'highpass', f: 1500, to: 4000, vol: 0.05 }); tone(400 * p, 0.5, { type: 'triangle', vol: 0.03, to: 1600 * p }); break;
+      case 'disco': [523, 659, 784, 1047].forEach((f, k) => tone(f * p, 0.15, { type: 'square', vol: 0.025, delay: k * 0.09 })); break;
     }
   },
   turretShot(){ if (can('ts', 60)) tone(1100, 0.05, { type: 'square', vol: 0.02, to: 700 }); },

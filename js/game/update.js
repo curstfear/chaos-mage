@@ -78,6 +78,78 @@ function update(){
         p.x += (pathLog[j] - p.x) * 0.3; p.y += (pathLog[j + 1] - p.y) * 0.3;
       }
       if (--p.beat <= 0 && p.life < p.max - 50){ p.beat = p.every; doPulse(p, p.x, p.y, p.R); }
+    } else if (p.kind === 'lasso'){
+      // «Лассо»: враг на верёвке разгоняется по кругу, сбивает всех, а в конце летит в ближайшую толпу
+      const e = p.tgt, cx = p.home ? P.x : p.ax, cy = p.home ? P.y : p.ay;
+      if (!e || e.dead){ p.life = 0; continue; }
+      e.stunT = Math.max(e.stunT || 0, 2);
+      p.ang += 0.08 + 0.14 * Math.min(1, (p.max - p.life) / 30);
+      e.x += (cx + Math.cos(p.ang) * p.R - e.x) * 0.35; e.y += (cy + Math.sin(p.ang) * p.R - e.y) * 0.35;
+      p.x = e.x; p.y = e.y;
+      near(e.x, e.y, e.r + 6, (o, dx, dy) => {
+        if (o === e || tick - (p.hcd.get(o) || -99) < 15) return;
+        p.hcd.set(o, tick); p.hit.add(o); hitEnemy(o, p, p.dmg, o.x, o.y); sfx.thud();
+        if (!o.boss && !o.static){ const d = Math.hypot(dx, dy) || 1; o.x += dx / d * 16; o.y += dy / d * 16; }
+        if (!p.first){ p.first = true; onImpact(p, o.x, o.y); }
+      });
+      if (tick % 2 === 0) particles.push({ x: e.x, y: e.y, vx: 0, vy: 0, life: 12, max: 12, color: p.color, r: e.r * 0.4 });
+      if (p.life <= 0){
+        const t = nearest(e.x, e.y, 520, new Set([e]));
+        let dx = t ? t.x - e.x : -Math.sin(p.ang), dy = t ? t.y - e.y : Math.cos(p.ang); const d = Math.hypot(dx, dy) || 1;
+        e.fly = 26; e.fvx = dx / d * 14; e.fvy = dy / d * 14;
+        e.fsrc = { ...p, kind: 'bolt', trigger: 0, split: 0, gravity: 0, triggered: true, dmg: p.dmg * 1.5, hit: new Set([e]) };
+        hitEnemy(e, p, p.dmg, e.x, e.y);
+        noise(0.2, { type: 'bandpass', f: 900, to: 300, vol: 0.08, q: 3 });
+      }
+    } else if (p.kind === 'pong'){
+      // «Пинг-понг»: летит к ближайшему врагу, кроме того, от кого только что отскочил
+      if (!p.tgt || p.tgt.dead) p.tgt = nearest(p.x, p.y, p.hits ? 280 : 360, p.last ? new Set([p.last]) : null);
+      if (p.tgt){ const dx = p.tgt.x - p.x, dy = p.tgt.y - p.y, d = Math.hypot(dx, dy) || 1; p.vx = dx / d * p.v; p.vy = dy / d * p.v; }
+      p.x += p.vx; p.y += p.vy;
+      const e = p.tgt;
+      if (e && Math.hypot(e.x - p.x, e.y - p.y) < p.r + e.r){
+        p.hits++; p.hit.add(e);
+        hitEnemy(e, p, p.dmg * (1 + 0.15 * p.hits), p.x, p.y);
+        if (!p.first){ p.first = true; onImpact(p, p.x, p.y); }
+        p.last = e; p.tgt = null; p.v = Math.min(17, p.v * 1.07); p.life = Math.max(p.life, 60);
+        if (p.hits >= 16) p.life = 0;
+        burst(p.x, p.y, 5, '#ffffff', 3);
+        if (can('pong', 40)) tone(500 + Math.min(p.hits, 16) * 70, 0.05, { type: 'square', vol: 0.03 });
+      }
+      if (solidAt(p.x, p.y, p.r * 0.5)){ p.life = 0; burst(p.x, p.y, 6, p.color, 2.5); }
+      if (tick % 2 === 0) particles.push({ x: p.x, y: p.y, vx: 0, vy: 0, life: 10, max: 10, color: p.color, r: p.r * 0.6 });
+    } else if (p.kind === 'rocket'){
+      // «Салют»: ракета летит дугой и рвётся, искры падают вокруг и рвутся второй раз
+      const k = 1 - p.life / p.max;
+      p.x = p.sx + (p.tx - p.sx) * k; p.y = p.sy + (p.ty - p.sy) * k - Math.sin(k * Math.PI) * 90;
+      particles.push({ x: p.x, y: p.y, vx: rnd(-0.6, 0.6), vy: rnd(0.3, 1.2), life: 18, max: 18, color: pick(FIREWORK), r: 2 });
+      if (p.life <= 0){
+        explode(p, p.tx, p.ty, 70 * p.size);
+        for (let j = 0; j < 8; j++){
+          const a = j / 8 * TAU + rnd(-0.2, 0.2), d = rnd(70, 125) * p.size;
+          meteors.push({ ...p, kind: null, x: p.tx + Math.cos(a) * d, y: p.ty + Math.sin(a) * d * 0.8, t: 16 + j * 3, max: 16 + j * 3, rad: 40 * p.size,
+                         size: 0.4 * p.size, dmg: p.dmg * 0.5, color: FIREWORK[j % FIREWORK.length], trigger: 0, split: 0, gravity: 0, triggered: true, geyser: false });
+        }
+        for (const c of FIREWORK) burst(p.tx, p.ty, 7, c, 8);
+        [1568, 2093, 1760].forEach((f, j) => tone(f, 0.12, { type: 'square', vol: 0.02, delay: 0.25 + j * 0.07 }));
+      }
+    } else if (p.kind === 'disco'){
+      // «Диско-шар»: лучи крутятся вокруг мага, каждый враг получает от лучей не чаще раза в 0.4 с
+      if (p.follow){ p.x = P.x; p.y = P.y; }
+      p.spin += 0.028;
+      if (tick % 4 === 0) near(p.x, p.y, p.len, (e, dx, dy) => {
+        if (tick - (p.hcd.get(e) || -99) < 24) return;
+        const d = Math.hypot(dx, dy), a = Math.atan2(dy, dx);
+        for (let k = 0; k < p.rays; k++){
+          let da = a - (p.spin + k / p.rays * TAU); da = Math.atan2(Math.sin(da), Math.cos(da));
+          if (Math.abs(da) < Math.PI / 2 && Math.abs(Math.sin(da)) * d < e.r + 12){
+            p.hcd.set(e, tick); p.hit.add(e); hitEnemy(e, p, p.dmg, e.x, e.y);
+            if (!p.first){ p.first = true; onImpact(p, e.x, e.y); }
+            break;
+          }
+        }
+      });
+      if (p.triggered && tick % 40 === 0) p.triggered = false;
     } else if (p.kind === 'orb'){
       p.ang += 0.075 * (p.dir || 1);
       const cx = p.anchor ? p.ax : P.x, cy = p.anchor ? p.ay : P.y;
@@ -275,6 +347,15 @@ function update(){
   }
   // «Комета» взрывается там, где закончила полёт
   for (const p of projs) if (p.boom && p.life <= 0 && !p.boomed){ p.boomed = true; explode({ ...p, boom: 0 }, p.x, p.y, p.boom); }
+  // «Матрёшка»: отлетавший снаряд распадается на две копии поменьше, те — ещё на две (больше — с каждой лишней руной)
+  for (const p of projs) if (p.doll && p.kind === 'bolt' && p.life <= 0 && !p.dolled && (p.gen || 0) <= p.doll){
+    p.dolled = true;
+    const sp = Math.max(5, Math.hypot(p.vx, p.vy)), a0 = Math.atan2(p.vy, p.vx);
+    for (const s of [-0.55, 0.55])
+      spawnProj({ ...p, gen: (p.gen || 0) + 1, dolled: false, x: p.x - p.vx, y: p.y - p.vy, vx: Math.cos(a0 + s) * sp, vy: Math.sin(a0 + s) * sp,
+                  r: p.r * 0.72, dmg: p.dmg * 0.6, life: 38, child: true, trigger: 0, split: 0, gravity: 0, boom: 0, returner: 0, returned: false, hit: new Set(p.hit) });
+    burst(p.x, p.y, 4, p.color, 2);
+  }
   projs = projs.filter(p => p.life > 0);
 
   for (const m of meteors) if (--m.t === 0){
@@ -380,6 +461,16 @@ function update(){
       continue;
     }
     if (e.stunT > 0){ e.stunT--; continue; }
+    // «Чары»: овечка в панике бежит прочь от мага и никого не трогает
+    if (e.sheep > 0){
+      e.sheep--;
+      const dx = e.x - P.x, dy = e.y - P.y, d = Math.hypot(dx, dy) || 1;
+      e.x += dx / d * 1.8 + Math.sin(tick * 0.2 + e.wob) * 0.8; e.y += dy / d * 1.8 + Math.cos(tick * 0.17 + e.wob) * 0.8;
+      pushOut(e, e.r * 0.8);
+      if (e.sheep % 50 === 25 && can('baa', 500)) tone(rnd(480, 560), 0.3, { type: 'sawtooth', vol: 0.025, to: 420 });
+      if (e.sheep === 0) burst(e.x, e.y, 14, '#ffc8f0', 3);
+      continue;
+    }
     const dx = P.x - e.x, dy = P.y - e.y, d = Math.hypot(dx, dy) || 1;
     if (e.type === 'bomber' && d < 70 + e.r){ e.fuse = 45; tone(900, 0.1, { type: 'square', vol: 0.03 }); continue; }
     if (e.boss){

@@ -178,6 +178,15 @@ function drawSolid(s){
 }
 function drawEnemy(e){
   const T = ETYPES[e.type], sc = T.sc * e.r / T.r;
+  // «Чары»: вместо врага прыгает овечка
+  if (e.sheep > 0){
+    const hop = Math.abs(Math.sin(tick * 0.35 + e.wob)) * 7, s = Math.max(20, e.r * 2.2);
+    shadow(e.x, e.y + e.r * 0.6, s * 0.35);
+    ctx.save(); ctx.translate(e.x, e.y - hop); if (e.x > player.x) ctx.scale(-1, 1);
+    ctx.font = `${Math.round(s)}px serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('🐑', 0, 0);
+    ctx.restore();
+    return;
+  }
   let img;
   if (e.static) img = crystalSpr(e.color);
   else {
@@ -636,6 +645,56 @@ function render(){
       const a = p.life / p.max;
       ctx.strokeStyle = p.color; ctx.globalAlpha = 0.7 * a + 0.2; ctx.lineWidth = 10 * a + 3;
       ctx.beginPath(); ctx.arc(p.x, p.y, Math.max(1, p.rr), 0, TAU); ctx.stroke(); ctx.globalAlpha = 1;
+      continue;
+    }
+    if (p.kind === 'disco'){
+      // лучи из-под ног, сверху — сам шар с зеркальными плитками
+      const fade = Math.min(1, p.life / 30, (p.max - p.life) / 15), by = p.y - 74 + Math.sin(tick * 0.08) * 3;
+      for (let k = 0; k < p.rays; k++){
+        const a = p.spin + k / p.rays * TAU, c = FIREWORK[k % FIREWORK.length], ex = p.x + Math.cos(a) * p.len, ey = p.y + Math.sin(a) * p.len;
+        ctx.strokeStyle = c; ctx.lineCap = 'round';
+        ctx.globalAlpha = 0.15 * fade; ctx.lineWidth = 26; ctx.beginPath(); ctx.moveTo(p.x, by); ctx.lineTo(ex, ey); ctx.stroke();
+        ctx.globalAlpha = 0.4 * fade; ctx.lineWidth = 12; ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(ex, ey); ctx.stroke();
+        ctx.globalAlpha = 0.9 * fade; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(ex, ey); ctx.stroke();
+      }
+      ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = fade;
+      ctx.strokeStyle = '#c8d2e0'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(p.x, by - 40); ctx.lineTo(p.x, by - 15); ctx.stroke();
+      ctx.fillStyle = '#0b0618'; ctx.beginPath(); ctx.arc(p.x, by, 17, 0, TAU); ctx.fill();
+      ctx.fillStyle = '#9aa0b8'; ctx.beginPath(); ctx.arc(p.x, by, 15, 0, TAU); ctx.fill();
+      for (let gx = -2; gx <= 2; gx++) for (let gy = -2; gy <= 2; gy++){
+        if (gx * gx + gy * gy > 5) continue;
+        const on = (gx * 3 + gy * 5 + Math.floor(tick / 6)) % 4 === 0;
+        ctx.fillStyle = on ? FIREWORK[(gx + gy + 6 + Math.floor(tick / 10)) % FIREWORK.length] : (gx + gy) % 2 ? '#e8eef8' : '#c8d2e0';
+        ctx.fillRect(p.x + gx * 5.5 - 2.5, by + gy * 5.5 - 2.5, 5, 5);
+      }
+      ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 1;
+      continue;
+    }
+    if (p.kind === 'lasso'){
+      // верёвка от мага к пойманному врагу и петля вокруг него
+      const e = p.tgt; if (!e) continue;
+      const cx = p.home ? player.x : p.ax, cy = p.home ? player.y : p.ay;
+      ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1; ctx.lineCap = 'round';
+      for (const [w, c] of [[6, '#0b0618'], [3, '#c89b5a']]){
+        ctx.strokeStyle = c; ctx.lineWidth = w;
+        ctx.beginPath(); ctx.moveTo(cx, cy - 10); ctx.quadraticCurveTo((cx + e.x) / 2, (cy + e.y) / 2 + 14, e.x, e.y); ctx.stroke();
+        ctx.beginPath(); ctx.ellipse(e.x, e.y + e.r * 0.2, e.r * 0.9, e.r * 0.45, 0, 0, TAU); ctx.stroke();
+      }
+      ctx.globalCompositeOperation = 'lighter';
+      continue;
+    }
+    if (p.kind === 'rocket'){
+      // куда упадёт салют
+      ctx.globalAlpha = 0.5; ctx.strokeStyle = p.color === PURE ? '#ffe08a' : p.color; ctx.lineWidth = 2; ctx.setLineDash([6, 6]);
+      ctx.beginPath(); ctx.arc(p.tx, p.ty, 70 * p.size * (p.life / p.max) + 8, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
+    }
+    if (p.kind === 'pong'){
+      ctx.globalAlpha = 0.5; ctx.drawImage(glow(p.color), p.x - p.r * 3, p.y - p.r * 3, p.r * 6, p.r * 6);
+      ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
+      ctx.fillStyle = '#0b0618'; ctx.beginPath(); ctx.arc(p.x, p.y, p.r + 2, 0, TAU); ctx.fill();
+      ctx.fillStyle = '#fff6e8'; ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, TAU); ctx.fill();
+      ctx.fillStyle = '#ffb347'; ctx.fillRect(p.x - p.r * 0.5, p.y - p.r * 0.5, p.r * 0.35, p.r * 0.35);
+      ctx.globalCompositeOperation = 'lighter';
       continue;
     }
     if (p.kind === 'tornado'){
