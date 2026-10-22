@@ -1,10 +1,13 @@
 // ---------- звук ----------
 const SND = { ctx: null, last: {} };
 let noiseBuf;
+// iPhone по умолчанию глушит Web Audio переключателем «Без звука» — просим играть как медиа
+try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
 function audioInit(){
-  if (SND.ctx){ SND.ctx.resume(); return; }
+  if (SND.ctx){ audioWake(); return; }
   const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
   const C = SND.ctx = new AC();
+  audioWake();
   const comp = C.createDynamicsCompressor(); comp.threshold.value = -16; comp.ratio.value = 6; comp.connect(C.destination);
   SND.master = C.createGain(); SND.master.gain.value = SET.sound ? 0.7 : 0; SND.master.connect(comp);
   SND.fx = C.createGain(); SND.fx.gain.value = 0.6; SND.fx.connect(SND.master);
@@ -12,6 +15,22 @@ function audioInit(){
   noiseBuf = C.createBuffer(1, C.sampleRate, C.sampleRate);
   const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
 }
+// телефон отпускает звук только внутри касания (и не любого: на iPhone и Android это отпускание пальца),
+// а после сворачивания снова его замораживает — поэтому будим на каждом нажатии, пока не заиграет
+function audioWake(){
+  const C = SND.ctx;
+  if (!C || C.state === 'running') return;
+  try { const r = C.resume(); if (r && r.catch) r.catch(() => {}); } catch (e) {}
+  // старому Safari мало resume(): нужен хоть один звук, запущенный из самого касания
+  const s = C.createBufferSource(); s.buffer = C.createBuffer(1, 1, 22050); s.connect(C.destination); s.start(0);
+}
+for (const ev of ['pointerdown', 'pointerup', 'touchend', 'click', 'keydown'])
+  addEventListener(ev, audioInit, { capture: true, passive: true });
+document.addEventListener('visibilitychange', () => {
+  if (!SND.ctx) return;
+  if (!document.hidden) return audioWake();
+  try { const r = SND.ctx.suspend(); if (r && r.catch) r.catch(() => {}); } catch (e) {}
+});
 function can(k, ms){ const t = performance.now(); if (SND.last[k] && t - SND.last[k] < ms) return false; SND.last[k] = t; return true; }
 function tone(f, dur, o = {}){
   if (!SND.ctx) return;

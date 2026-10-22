@@ -201,7 +201,7 @@ const BUILD = {
 };
 const SPR = {};
 function buildSprites(){
-  SPR.mage = [0, 1, 2, 3].map(f => mageSprite(f, COSTUMES[WARD.selected]));
+  SPR.mage = mageFrames(LOOK);
   SPR.slime = [0, 1].map(slimeSprite);
   SPR.runner = [0, 1].map(impSprite);
   SPR.brute = [0, 1].map(bruteSprite);
@@ -230,9 +230,6 @@ function biomeSprites(biome){
   return SPR.biome[biome] = S;
 }
 const crystalSpr = col => SPR.crystal[col] || (SPR.crystal[col] = crystalSprite(col));
-function setCostume(id){ WARD.selected = id; saveWard(); SPR.mage = [0, 1, 2, 3].map(f => mageSprite(f, COSTUMES[id])); }
-const previewCache = {};
-const costumePreview = id => previewCache[id] || (previewCache[id] = mageSprite(0, COSTUMES[id]).toDataURL());
 const tintCache = new Map();
 function tinted(img, color, a){
   let m = tintCache.get(img); if (!m){ m = {}; tintCache.set(img, m); }

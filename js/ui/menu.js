@@ -3,18 +3,17 @@ const fmtTime = s => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 function goMenu(){ setState('menu'); renderMenu(); showModal('menuM'); }
 function renderMenu(){
   $('menuShards').textContent = `💠 ${META.shards}`;
+  $('menuCoins').textContent = coinsTxt();
   $('menuStats').innerHTML = META.runs
-    ? `Забегов: <b>${META.runs}</b> · Рекорд: <b>${fmtTime(META.bestSec)}</b> · Убито: <b>${META.kills}</b>`
+    ? `Забегов: <b>${META.runs}</b> · Рекорд: <b>${META.best.score}</b> очков · Убито: <b>${META.kills}</b>`
     : 'Первый забег ждёт тебя!';
   $('treeBtn').classList.toggle('glow', UPGRADES.some(u => upState(u) === 'buy')); // есть что купить
+  $('rollMenuBtn').classList.toggle('glow', META.coins >= ROLL_COST);
 }
-// звук можно включить только после касания — включаем на первом же нажатии в меню
-addEventListener('pointerdown', () => audioInit(), { once: true, capture: true });
 const backToMenu = () => { showModal('menuM'); renderMenu(); sfx.click(); };
 $('playBtn').onclick = startRun;
 $('treeBtn').onclick = () => openTree();
-$('wardBtn').onclick = () => openWardrobe('menuM');
-$('setBtn').onclick = () => { renderOpts(); showModal('setM'); sfx.click(); };
+$('setBtn').onclick = () => { renderOpts(); updInstallBtn(); $('installHow').hidden = true; showModal('setM'); sfx.click(); };
 $('helpBtn').onclick = () => { showModal('helpM'); sfx.click(); };
 $('setClose').onclick = backToMenu;
 $('helpClose').onclick = backToMenu;

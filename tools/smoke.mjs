@@ -35,8 +35,11 @@ for (const prof of PROFILES){
   const page = await browser.newPage();
   if (prof.viewport.isMobile) await page.setUserAgent(IPHONE_UA);
   await page.setViewport(prof.viewport);
+  // тестовые забеги не должны попадать в настоящий общий рейтинг: запросы к Supabase глушим (нужный шаг подменяет fetch сам)
+  await page.setRequestInterception(true);
+  page.on('request', r => /supabase\.co/.test(r.url()) ? r.abort() : r.continue());
   page.on('pageerror', e => errors.push(String(e)));
-  page.on('console', m => { if (m.type() === 'error' && !/fonts\.(googleapis|gstatic)/.test(m.text())) errors.push(m.text()); });
+  page.on('console', m => { if (m.type() === 'error' && !/fonts\.(googleapis|gstatic)|supabase\.co|ERR_FAILED/.test(m.text())) errors.push(m.text()); });
   const touch = !!prof.viewport.hasTouch;
   const g = expr => page.evaluate(expr); // игровые переменные — глобальные, достаём их напрямую
   // вёрстка: страница не прокручена и не увеличена, видимые элементы не вылезают за края экрана
@@ -107,6 +110,62 @@ for (const prof of PROFILES){
     await press('.node[data-u=heart]'); // закрытый навык: купить нельзя
     if (!(await g("$('buyBtn').disabled"))) throw new Error('закрытый навык можно купить');
     await press('#treeClose');
+  });
+  await step('гардероб: примерка, покупка, след', async () => {
+    await g('META.coins = 200; saveMeta(); renderMenu()');
+    await press('#wardBtn');
+    await shot('0-wardrobe');
+    await press('.wcard[data-i=hat_top]'); // магазинная вещь: сначала только примерка
+    if (await g('WARD.on.hat') !== 'hat_wizard') throw new Error('надел, не купив');
+    await press('#wardAct');
+    if (await g('WARD.on.hat') !== 'hat_top' || await g('META.coins') !== 80) throw new Error(`покупка: ${await g('WARD.on.hat')}, монет ${await g('META.coins')}`);
+    await press('#slotTabs [data-s=trail]');
+    await press('.wcard[data-i=trail_sparks]'); await press('#wardAct');
+    if (await g('LOOK.trail.kind') !== 'sparks') throw new Error('след не наделся');
+    await press('#slotTabs [data-s=beard]');
+    await press('.wcard[data-i=beard_rainbow]'); // из рулетки: купить нельзя
+    if (await g("!!$('wardAct')")) throw new Error('вещь из рулетки можно купить');
+    await sleep(400); await shot('0-wardrobe-try');
+  });
+  await step('рулетка', async () => {
+    await press('#wardRoll');
+    await g('REEL_MS = 300; META.coins = 60; renderRoll()');
+    await shot('0-roll');
+    const own = await g('Object.values(WARD.own).reduce((s, n) => s + n, 0)');
+    await press('#rollBtn'); await sleep(700);
+    if (await g('META.coins') !== 60 - await g('ROLL_COST')) throw new Error('монеты не списались');
+    if (await g('Object.values(WARD.own).reduce((s, n) => s + n, 0)') !== own + 1) throw new Error('вещь не выпала');
+    if (!(await g("$('rollRes').textContent.length > 0"))) throw new Error('нет результата');
+    await shot('0-roll-win');
+    await press('#rollBtn'); await sleep(700);
+    if (!(await g("$('rollBtn').disabled"))) throw new Error('крутится без монет');
+    // честность: на 20000 бросков доли редкостей близки к заявленным, повторы есть
+    const share = await g(`(() => { const n = {}; for (let i = 0; i < 20000; i++){ const r = ITEMS[randomRollItem()].rar; n[r] = (n[r] || 0) + 1; } return n; })()`);
+    if (Math.abs(share.junk / 20000 - 0.38) > 0.03 || !(share.legend > 300 && share.legend < 900)) throw new Error('доли редкостей: ' + JSON.stringify(share));
+    await press('#rollClose'); await press('#wardClose');
+    if (!(await g("$('menuM').classList.contains('show')"))) throw new Error('не вернулись в меню');
+    await g('META.coins = 0; saveMeta(); renderMenu()');
+  });
+  await step('рекорды и общий рейтинг (сервер подменён)', async () => {
+    await press('#recBtn'); await shot('0-records');
+    await press('#recClose');
+    await g(`ONLINE.url = 'https://test.supabase.co'; ONLINE.key = 'sb_publishable_test'; META.best.score = 100; window.__calls = [];
+      window.__fetch = window.__fetch || fetch;
+      window.fetch = (u, o) => {
+        const fn = u.split('/').pop(), body = JSON.parse(o.body); __calls.push([fn, body]);
+        const data = fn === 'top_scores' ? [{ id: 'x', name: '<b>Хакер</b>', score: 5000, kills: 300, level: 15, runs: 3 }, { id: onlinePlayer().id, name: playerName(), score: 100, kills: 5, level: 2, runs: 1 }] : fn === 'my_rank' ? 2 : null;
+        return Promise.resolve(new Response(data === null ? null : JSON.stringify(data), { status: data === null ? 204 : 200 }));
+      }`);
+    await press('#recBtn'); await sleep(300);
+    if (await g("document.querySelectorAll('#recTable tr').length") !== 3) throw new Error('таблица: ' + await g("$('recTable').textContent"));
+    if (await g("!!document.querySelector('#recTable b')")) throw new Error('имя игрока не экранировано');
+    await page.click('#nameIn', { clickCount: 3 }); await page.keyboard.type('Тест'); await page.keyboard.press('Enter'); await sleep(300);
+    const sub = await g("__calls.filter(c => c[0] === 'submit_score').pop()");
+    if (!sub || sub[1].p_name !== 'Тест') throw new Error('имя не отправилось: ' + JSON.stringify(sub));
+    if (await g('state') !== 'menu' || !(await g("$('recM').classList.contains('show')"))) throw new Error('Enter в поле имени сработал как «Играть»');
+    await shot('0-records-online');
+    await press('#recClose');
+    await g("ONLINE.url = ''; META.best.score = 0; saveMeta()"); // дальше — снова без сети
   });
   await step('выбор пакта и начало боя', async () => {
     await press('#playBtn');
@@ -222,6 +281,8 @@ for (const prof of PROFILES){
     await sleep(500);
     if (await g('state') !== 'dead') throw new Error('state = ' + await g('state'));
     if (!(await g('META.shards') > shards)) throw new Error('осколки не начислились');
+    if (!(await g('META.coins') > 0)) throw new Error('монеты не начислились');
+    if (await g('META.top.length') !== 1 || !(await g('META.best.score') > 0)) throw new Error('рекорд не записался');
     await shot('8-dead');
     await press('#againBtn');
     if (await g('state') !== 'pact') throw new Error('state = ' + await g('state'));

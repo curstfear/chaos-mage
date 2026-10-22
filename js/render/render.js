@@ -356,11 +356,14 @@ function drawPlayer(){
   const img = SPR.mage[moving ? Math.floor(tick * 0.18) % 4 : 0];
   const w = img.width * sc, h = img.height * sc, bob = moving ? 0 : Math.sin(tick * 0.08) * 1.5;
   const flip = Math.cos(P.face) < 0;
+  trailDraw(ctx, mageTrail, sc);
   shadow(P.x, P.y + h * 0.42, w * 0.38);
+  for (const a of lookAuras(LOOK)){ ctx.globalCompositeOperation = 'lighter'; ctx.globalAlpha = 0.3 + 0.1 * Math.sin(tick * 0.1); ctx.drawImage(glow(a), P.x - w * 0.9, P.y - h * 0.8, w * 1.8, h * 1.6); }
+  ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
   // свечение посоха
   const orbX = P.x + (flip ? -1 : 1) * (18.5 - 11) * sc, orbY = P.y - h / 2 + 6 * sc + bob;
   ctx.globalCompositeOperation = 'lighter';
-  ctx.globalAlpha = 0.55 + 0.15 * Math.sin(tick * 0.15); ctx.drawImage(glow(COSTUMES[WARD.selected].orb), orbX - 26 * sc / 2, orbY - 26 * sc / 2, 26 * sc, 26 * sc);
+  ctx.globalAlpha = 0.55 + 0.15 * Math.sin(tick * 0.15); ctx.drawImage(glow(staffGlow(LOOK)), orbX - 26 * sc / 2, orbY - 26 * sc / 2, 26 * sc, 26 * sc);
   ctx.globalAlpha = 0.35; ctx.drawImage(glow('#9b7bff'), P.x - w, P.y - h * 0.7, w * 2, h * 1.4);
   ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
   ctx.save(); ctx.translate(P.x, P.y + bob);

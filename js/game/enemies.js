@@ -173,7 +173,7 @@ function bossAttack(e, dx, dy, d){
 const ARROWS = ['→', '↘', '↓', '↙', '←', '↖', '↑', '↗'];
 function events(){
   weatherTick(); goldTick();
-  if (tick === 36000) unlockCostume('golden');
+  if (tick === 36000) unlockSet('golden');
   if (--evTimer <= 0){ evTimer = Math.round(60 * rnd(70, 100)); startEvent(); }
   if (ev){ ev.t--; if (ev.type === 'meteors' && ev.t % 22 === 0) envMeteor(); if (ev.t <= 0) ev = null; }
   if (moonT > 0) moonT--;

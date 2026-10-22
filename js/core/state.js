@@ -24,7 +24,7 @@ function newGame(){
   RUN = { seed: Math.random() * 1e9 | 0, biome: pick(Object.keys(BIOMES)), pact: null };
   PACT = pactStats(null);
   player = { x: 0, y: 0, vx: 0, vy: 0, r: 14, hp: PACT.hp, maxHp: PACT.hp, inv: 0, dash: 0, dashCd: 0, face: 0, onIce: false };
-  enemies = []; projs = []; meteors = []; puddles = []; ebullets = []; gems = []; particles = []; amb = []; zaps = []; beams = []; slashes = [];
+  enemies = []; projs = []; meteors = []; puddles = []; ebullets = []; gems = []; particles = []; mageTrail.length = 0; amb = []; zaps = []; beams = []; slashes = [];
   nums = []; scheduled = []; banners = []; nearProps = []; nearSolids = []; holes = []; ties = []; pathLog = [];
   pets = []; trail = []; toad = null; hasFeather = false; comboRuneCd = 0; mom = new Array(NSLOTS).fill(0);
   toadTimer = Math.round(60 * rnd(200, 260)); wildTimer = Math.round(60 * rnd(140, 180));

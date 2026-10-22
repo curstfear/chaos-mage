@@ -179,8 +179,8 @@ function kill(e){
     kills++; combo++; comboTimer = 110;
     if (combo > bestCombo) bestCombo = combo;
     sfx.kill(combo);
-    if (kills === 500) unlockCostume('street');
-    if (combo === 100) unlockCostume('fiesta');
+    if (kills === 500) unlockSet('street');
+    if (combo === 100) unlockSet('fiesta');
     if (combo % 200 === 0 && comboRuneCd <= 0) chaosBurst();
   } else sfx.crystal();
   burst(e.x, e.y, e.boss ? 80 : e.static ? 22 : 12, e.color, e.boss ? 9 : 4);
@@ -199,7 +199,7 @@ function kill(e){
   if (e.type === 'brute') for (let k = 0; k < 3; k++) spawnEnemy('slime', e.x + rnd(-15, 15), e.y + rnd(-15, 15));
   if (e.type === 'slimeking') for (let k = 0; k < 6; k++) spawnEnemy('slime', e.x + rnd(-40, 40), e.y + rnd(-40, 40), k < 2, true);
   if (e.boss){
-    shake = 10; banner(`👑 ${e.name} повержен!`, '#ff5a7a'); unlockCostume('king');
+    shake = 10; banner(`👑 ${e.name} повержен!`, '#ff5a7a'); unlockSet('king');
     if (!hasPet('phoenix') && !hasFeather) gems.push({ x: e.x, y: e.y - 20, kind: 'feather' });
   }
   if (e.type === 'goblin') banner('💰 Гоблин пойман! Руны твои!', '#ffd700');
@@ -235,7 +235,7 @@ function weatherTick(){
     const prev = weather.type;
     const type = prev === 'clear' ? pick(['rain', 'storm', 'gale']) : 'clear';
     weather = { type, t: Math.round(60 * (type === 'clear' ? rnd(70, 110) : rnd(45, 70))) };
-    if (prev === 'storm' && player.hp > 0) unlockCostume('storm');
+    if (prev === 'storm' && player.hp > 0) unlockSet('storm');
     banner(type === 'clear' ? '☀️ Небо прояснилось' : `${weatherName(type)}: ${WEATHER[type].desc}`, type === 'clear' ? '#ffe08a' : '#a8d8ff');
     sfx.event(); weatherSound();
   }

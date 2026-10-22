@@ -17,6 +17,7 @@ addEventListener('pointermove', e => {
 const KEY = name => (TOUCH ? { craft: '🔮', pause: '⏸' } : { craft: 'TAB', pause: 'Esc' })[name];
 
 addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' && e.code !== 'Escape') return; // печатаем имя для рейтинга
   if (state === 'menu'){
     // в меню: Esc закрывает вложенное окно, Enter — играть
     if (e.code === 'Escape') goMenu();

@@ -51,67 +51,6 @@ function mix(h, to, t){
 const OUT = '#0e0820';
 function eye2(b, x, y, pupil){ rect(b, x - 1, y - 1, 2, 2, '#ffffff'); pset(b, x, y, pupil || '#1a0820'); }
 
-// костюмы мага: открываются за достижения и хранятся в браузере между забегами
-const COSTUMES = {
-  classic: { name: 'Классический маг', how: 'есть с самого начала', robe: ['#4a35b0', '#35248a', '#6a52e0'], trim: '#ffd25a', hat: 'wizard', hatC: ['#3b2a9a', '#2c1d6e'], band: '#ffd25a', orb: '#7fe8ff' },
-  street:  { name: 'Уличный маг', how: 'Убей 500 врагов за один забег', robe: ['#2f6fd0', '#1f4c96', '#5a96f0'], trim: '#ffffff', hat: 'cap', hatC: ['#e0303a', '#a01820'], orb: '#ff8aa0' },
-  fiesta:  { name: 'Фиеста', how: 'Набери комбо ×100', robe: ['#e05a2a', '#a83a16', '#ff8a50'], trim: '#2fd07a', hat: 'sombrero', hatC: ['#f0c040', '#b88a20'], band: '#e0303a', orb: '#ffe95a' },
-  king:    { name: 'Король хаоса', how: 'Победи босса', robe: ['#8a1a44', '#5a102c', '#b83a64'], trim: '#ffd25a', hat: 'crown', orb: '#ff4f8b' },
-  pirate:  { name: 'Пират рун', how: 'Разрушь 20 построек за один забег', robe: ['#2e2e3c', '#1a1a24', '#4a4a60'], trim: '#c0392b', hat: 'pirate', hatC: ['#1a1a22', '#0c0c10'], orb: '#7dff5a' },
-  storm:   { name: 'Повелитель бури', how: 'Переживи грозу до конца', robe: ['#1e3a6a', '#122648', '#3a62a0'], trim: '#7fe8ff', hat: 'wizard', hatC: ['#22406e', '#16294a'], band: '#ffe95a', orb: '#ffe95a', bolt: true },
-  golden:  { name: 'Золотой маг', how: 'Продержись 10 минут', robe: ['#e8b84a', '#a8781e', '#ffe08a'], trim: '#ffffff', hat: 'wizard', hatC: ['#ffd25a', '#c99a2a'], band: '#ffffff', orb: '#ffffff' }
-};
-const WARD = { unlocked: ['classic'], selected: 'classic' };
-try {
-  const s = JSON.parse(localStorage.getItem('chaosMageCostumes') || '{}');
-  if (Array.isArray(s.unlocked)) WARD.unlocked = [...new Set(['classic', ...s.unlocked.filter(k => COSTUMES[k])])];
-  if (COSTUMES[s.selected] && WARD.unlocked.includes(s.selected)) WARD.selected = s.selected;
-} catch (e) {}
-const saveWard = () => { try { localStorage.setItem('chaosMageCostumes', JSON.stringify(WARD)); } catch (e) {} };
-
-function mageSprite(f, C){
-  const b = PB(22, 26), walk = [0, 1, 0, -1][f], [rb, rd, rl] = C.robe;
-  line(b, 18, 8, 18, 24, '#7a4a22'); line(b, 19, 9, 19, 24, '#5a3416');
-  tri(b, 11, 11, 3, 23, 19, 23, rb); rect(b, 5, 17, 13, 6, rb);
-  tri(b, 11, 11, 11.5, 23, 19, 23, rd, rb);
-  line(b, 6, 18, 5, 22, rl, rb);
-  rect(b, 3, 22, 17, 1, C.trim, true); line(b, 11, 15, 11, 21, C.trim, true);
-  rect(b, 6 + walk, 23, 3, 2, '#2a1a50'); rect(b, 13 - walk, 23, 3, 2, '#2a1a50');
-  disc(b, 11, 11, 3.6, 3.4, '#f2c9a0');
-  disc(b, 11, 13.5, 3.4, 2, '#ecebf5'); tri(b, 8, 13, 14, 13, 11, 18.5, '#ecebf5'); line(b, 12, 14, 12, 17, '#c9c6d8', '#ecebf5');
-  if (C.hat === 'crown') disc(b, 11, 8, 3.8, 1.8, '#ecebf5');
-  pset(b, 10, 10, '#1a1030'); pset(b, 13, 10, '#1a1030');
-  if (C.hat === 'wizard'){
-    const [hc, hd] = C.hatC;
-    disc(b, 11, 8, 8.5, 1.9, hd);
-    tri(b, 5.5, 8, 16.5, 8, 14, 1, hc); tri(b, 11, 8, 16.5, 8, 14, 1, hd, hc);
-    pset(b, 15, 0, hc); pset(b, 16, 0, hc); pset(b, 16, 1, hc);
-    line(b, 7, 6, 15, 6, C.band, true); pset(b, 11, 3, '#ffe9a0'); pset(b, 12, 4, C.band);
-    if (C.bolt) for (const [x, y] of [[13, 1], [12, 2], [13, 3], [12, 4], [11, 5]]) pset(b, x, y, '#ffe95a', true);
-  } else if (C.hat === 'cap'){
-    const [hc, hd] = C.hatC;
-    disc(b, 11, 8, 4.8, 3, hc); rect(b, 6, 8, 11, 2, hc); rect(b, 12, 8, 7, 2, hd);
-    pset(b, 11, 5, '#ffffff'); line(b, 8, 7, 9, 6, '#ff6a72', hc);
-  } else if (C.hat === 'sombrero'){
-    const [hc, hd] = C.hatC;
-    disc(b, 11, 8.5, 10.5, 1.8, hd); disc(b, 11, 8.2, 10, 1.3, hc, hd);
-    disc(b, 11, 5.5, 4.2, 3.2, hc); rect(b, 7, 6, 9, 1, C.band, hc);
-    for (const x of [2, 6, 16, 20]) pset(b, x, 8, C.band);
-  } else if (C.hat === 'crown'){
-    rect(b, 7, 5, 9, 3, '#ffd25a');
-    tri(b, 7, 5, 8, 1.5, 9.5, 5, '#ffd25a'); tri(b, 9.5, 5, 11.5, 0.5, 13.5, 5, '#ffd25a'); tri(b, 13.5, 5, 15, 1.5, 16, 5, '#ffd25a');
-    rect(b, 7, 7, 9, 1, '#b8861e'); pset(b, 11, 6, '#ff2e4d'); pset(b, 8, 6, '#4bd6ff'); pset(b, 14, 6, '#4bd6ff');
-  } else if (C.hat === 'pirate'){
-    const [hc, hd] = C.hatC;
-    disc(b, 11, 7.6, 8.5, 2.1, hc); tri(b, 5, 7.6, 17, 7.6, 11, 1.5, hc); tri(b, 11, 1.5, 17, 7.6, 11, 7.6, hd, hc);
-    rect(b, 4, 7, 15, 1, C.trim, true);
-    for (const [x, y] of [[10, 4], [11, 4], [12, 4], [11, 5], [10, 6], [12, 6]]) pset(b, x, y, '#ffffff');
-  }
-  disc(b, 18, 15, 1.7, 1.6, '#f2c9a0');
-  disc(b, 18.5, 6, 2.5, 2.5, C.orb); pset(b, 17, 5, '#ffffff');
-  outline(b, OUT);
-  return toCanvas(b);
-}
 function slimeSprite(f){
   const b = PB(20, 18), sq = f ? 1 : 0;
   ball(b, 10, 11 + sq * 0.6, 8.6 + sq, 6.4 - sq, '#ff4f8b', '#c22e66', '#ff9cc0');

@@ -30,27 +30,6 @@ $('againBtn').onclick = startRun;
 $('craftClose').onclick = closeModal;
 $('resumeBtn').onclick = closeModal;
 
-// гардероб
-let wardBack = 'menuM';
-function openWardrobe(back){ wardBack = back; renderWard(); showModal('wardM'); sfx.click(); }
-function renderWard(){
-  $('wardUI').innerHTML = Object.entries(COSTUMES).map(([id, C]) => {
-    const open = WARD.unlocked.includes(id), on = WARD.selected === id;
-    return `<div class="wcard${open ? '' : ' locked'}${on ? ' on' : ''}" data-c="${id}"><img src="${costumePreview(id)}" alt=""><b>${C.name}</b>` +
-      `<small>${on ? '✔ надето' : open ? 'нажми, чтобы надеть' : '🔒 ' + C.how}</small></div>`;
-  }).join('');
-  document.querySelectorAll('.wcard').forEach(el => el.onclick = () => {
-    const id = el.dataset.c;
-    if (!WARD.unlocked.includes(id)) return;
-    setCostume(id); sfx.rune(); renderWard();
-  });
-}
-function unlockCostume(id){
-  if (WARD.unlocked.includes(id)) return;
-  WARD.unlocked.push(id); saveWard();
-  banner(`🎉 Новый костюм: ${COSTUMES[id].name}! (гардероб — в главном меню)`, '#ffe08a');
-  sfx.level();
-}
 // сова: выбрать 3 руны в дар
 let owlTree = null, owlSel = new Set();
 function openOwl(s){ owlTree = s; owlSel = new Set(); setState('pick'); sortInv(); renderOwl(); showModal('owlM'); tone(600, 0.3, { vol: 0.05 }); }
@@ -78,7 +57,6 @@ function renderPetList(){
     ? `<div>${P.icon} <b>${P.name}</b> — ${P.desc}</div>`
     : `<div class="off">🔒 ${P.name}: ${P.how}</div>`).join('') + (hasFeather ? '<div>🪶 У тебя перо феникса — смерть не будет концом</div>' : '');
 }
-$('wardClose').onclick = () => { showModal(wardBack); sfx.click(); };
 
 // мастерская
 let selRune = -1;

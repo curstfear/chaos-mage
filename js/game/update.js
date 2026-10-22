@@ -12,6 +12,8 @@ function update(){
     P.vx += (mx * sp - P.vx) * k; P.vy += (my * sp - P.vy) * k;
   }
   P.x += P.vx; P.y += P.vy;
+  if (Math.hypot(P.vx, P.vy) > 0.6) trailEmit(mageTrail, LOOK.trail.kind, P.x, P.y + P.r * 1.6, 2 * P.r / 14, tick);
+  trailStep(mageTrail, 2 * P.r / 14);
   if (RUN.pact === 'wind'){ P.x += wind.x * 0.9; P.y += wind.y * 0.9; }
   if (pushOut(P, P.r * 0.8) && P.dash > 0) sfx.thud();
   if (P.dashCd > 0) P.dashCd--; if (P.inv > 0) P.inv--;
@@ -500,12 +502,13 @@ function die(){
   const sec = Math.floor(tick / 60);
   const best = slotDmg.indexOf(Math.max(...slotDmg));
   $('deadStats').innerHTML = `<span>⏱ Время</span><b>${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}</b>
-    <span>⭐ Уровень</span><b>${level}</b><span>💀 Убито</span><b>${kills}</b><span>🔥 Комбо</span><b>${bestCombo}</b><span>🏚 Разрушено</span><b>${destroyed}</b><span>🐾 Питомцы</span><b>${pets.map(p => PETS[p.id].icon).join('') || '—'}</b><span>🎽 Костюмы</span><b>${WARD.unlocked.length}/${Object.keys(COSTUMES).length}</b>
+    <span>⭐ Уровень</span><b>${level}</b><span>💀 Убито</span><b>${kills}</b><span>🔥 Комбо</span><b>${bestCombo}</b><span>🏚 Разрушено</span><b>${destroyed}</b><span>🐾 Питомцы</span><b>${pets.map(p => PETS[p.id].icon).join('') || '—'}</b><span>🎽 Шмотки</span><b>${Object.keys(WARD.own).length}/${Object.keys(ITEMS).length}</b>
     <span style="grid-column:1/-1;margin-top:6px;color:var(--dim)">${BIOMES[RUN.biome].icon} ${BIOMES[RUN.biome].name} · ${PACTS[RUN.pact].icon} ${PACTS[RUN.pact].name}</span>
     <span style="grid-column:1/-1;color:var(--dim)">Лучший навык: <b style="float:none">${skillName(slots[best])}</b> — ${Math.round(slotDmg[best])} урона</span>`;
-  $('deadReward').innerHTML = `<div class="rwTotal">💠 +${R.total} <small>осколков хаоса</small></div>` +
+  $('deadReward').innerHTML = `<div class="rwScore">🏆 ${R.score} очков${R.record ? ' <b>· новый рекорд!</b>' : ''}</div>` +
+    `<div class="rwTotal"><span>💠 +${R.total} <small>осколков</small></span><span>🪙 +${R.coins} <small>монет</small></span></div>` +
     `<div class="rwParts">${R.parts.filter(([, v]) => v > 0).map(([k, v]) => `<span>${k} +${v}</span>`).join('')}` +
-    (R.bonus ? `<span>💰 алчность +${R.bonus}</span>` : '') + `</div><div class="rwHave">теперь у тебя 💠 ${META.shards}</div>`;
+    (R.bonus ? `<span>💰 алчность +${R.bonus}</span>` : '') + `</div><div class="rwHave">теперь у тебя 💠 ${META.shards} · 🪙 ${META.coins}</div>`;
   tone(300, 1.2, { type: 'sawtooth', vol: 0.08, to: 60 });
   showModal('deadM');
 }

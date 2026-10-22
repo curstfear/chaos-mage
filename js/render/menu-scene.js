@@ -2,11 +2,12 @@
 // Маг стоит на рунном круге в центре #menuStage (место под него оставляет вёрстка меню),
 // вокруг по эллипсу кружат руны, вверх летят искры. Рисуется в экранных пикселях, без камеры.
 const MENU_RUNES = ['bolt', 'fire', 'ice', 'lightning', 'meteor', 'poison', 'beam', 'chaos'].filter(r => RUNES[r]);
-const menuSparks = [];
+const menuSparks = [], menuTrail = [];
+let menuT = 0;
 const menuStars = Array.from({ length: 70 }, (_, i) => ({ x: (i * 0.6180339) % 1, y: (i * 0.4142135 + 0.13) % 1, p: i * 1.7, s: 1 + i % 3 }));
 
 function drawMenu(){
-  const t = performance.now() / 1000, w = innerWidth, h = innerHeight;
+  const t = performance.now() / 1000, w = innerWidth, h = VH;
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
   ctx.imageSmoothingEnabled = false;
   ctx.globalAlpha = 1;
@@ -58,9 +59,18 @@ function drawMenu(){
   const bob = Math.round(Math.sin(t * 2.2) * k * 0.5);
   const mx = cx - 11 * k, my = feet - 25 * k + bob;
   ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.beginPath(); ctx.ellipse(cx, feet, 7 * k, 2 * k, 0, 0, TAU); ctx.fill();
+  // след от шмоток стекает с подола и уплывает в сторону
+  trailEmit(menuTrail, LOOK.trail.kind, cx - 2 * k, feet - k, k, ++menuT);
+  trailStep(menuTrail, k);
+  for (const p of menuTrail) p.x -= 0.35 * k;
+  trailDraw(ctx, menuTrail, k);
+  for (const a of lookAuras(LOOK)){ ctx.globalAlpha = 0.3 + 0.1 * Math.sin(t * 2); ctx.drawImage(glow(a), cx - 15 * k, my - 3 * k, 30 * k, 30 * k); }
+  ctx.globalAlpha = 1;
   ctx.drawImage(SPR.mage[0], mx, my, 22 * k, 26 * k);
   const pulse = 1 + 0.15 * Math.sin(t * 4);
-  ctx.drawImage(glow('rgba(127,232,255,.8)'), mx + 18.5 * k - 5 * k * pulse, my + 8 * k - 5 * k * pulse, 10 * k * pulse, 10 * k * pulse);
+  ctx.globalAlpha = 0.85;
+  ctx.drawImage(glow(staffGlow(LOOK)), mx + 18.5 * k - 5 * k * pulse, my + 6 * k - 5 * k * pulse, 10 * k * pulse, 10 * k * pulse);
+  ctx.globalAlpha = 1;
 
   orbit.filter(o => o.front).forEach(drawRune);
 

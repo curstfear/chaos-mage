@@ -2,6 +2,7 @@
   --txt:#f3ecff;--dim:#a99cc9;--form:#5fd3ff;--el:#ff8a4a;--mod:#c48bff;--hp:#ff3d6e;
   --pix:"Pixelify Sans",ui-monospace,monospace;--big:"Press Start 2P",ui-monospace,monospace}
 html,body{margin:0;height:100%;background:#07060f;overflow:hidden;color:var(--txt);font-family:var(--pix);user-select:none;-webkit-user-select:none}
+[hidden]{display:none!important}
 canvas#c{display:block;cursor:none;image-rendering:pixelated}
 /* пиксельная рамка с золотой окантовкой */
 .frame{position:relative;background:linear-gradient(180deg,var(--panel2),var(--panel));border:3px solid var(--ink);

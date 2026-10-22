@@ -1,0 +1,69 @@
+/* гардероб, рулетка, рекорды */
+.wardTop{display:grid;grid-template-columns:200px minmax(0,1fr);gap:16px;margin:10px 0 16px}
+#wardPrev{width:200px;height:190px;display:block;background:radial-gradient(circle at 50% 70%,#2a1a5a,#130b2c);box-shadow:0 0 0 2px var(--ink),inset 0 0 0 2px #2e2358}
+.wardInfo .pbtn{margin-top:10px}
+.slotTabs{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:14px}
+#wardM .wardrobe{grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:16px;margin-bottom:16px}
+#wardM .wcard{padding:12px 8px 10px}
+#wardM .wcard b{font-size:14px}
+#wardM .foot{display:flex;justify-content:flex-end;gap:14px;flex-wrap:wrap}
+
+.reel{position:relative;overflow:hidden;height:104px;margin:4px 0 14px;background:rgba(0,0,0,.35);box-shadow:0 0 0 2px var(--ink),inset 0 0 0 2px #2e2358}
+.reel::before,.reel::after{content:"";position:absolute;top:0;bottom:0;width:18%;z-index:1;pointer-events:none}
+.reel::before{left:0;background:linear-gradient(90deg,#0b0618,transparent)}
+.reel::after{right:0;background:linear-gradient(270deg,#0b0618,transparent)}
+.reelTrack{display:flex;gap:8px;padding:10px 0;will-change:transform}
+.rtile{flex:none;width:76px;height:84px;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,#2c1f58,#1a1234);
+  box-shadow:inset 0 0 0 2px var(--tc),inset 0 -6px 0 0 var(--tc)}
+.rtile .wthumb{margin:0}
+.rtile.win{animation:winPulse .5s 4 alternate;box-shadow:inset 0 0 0 3px var(--tc),inset 0 -6px 0 0 var(--tc),0 0 20px 2px var(--tc)}
+@keyframes winPulse{to{filter:brightness(1.5)}}
+.reelMark{position:absolute;left:50%;top:0;bottom:0;width:3px;margin-left:-1.5px;z-index:2;background:var(--gold2);box-shadow:0 0 10px var(--gold2)}
+.rollRes{min-height:100px;display:flex;justify-content:center;align-items:center;margin-bottom:10px}
+.rwin{display:flex;gap:14px;align-items:center;text-align:left;padding:10px 18px 10px 12px;background:rgba(0,0,0,.3);
+  box-shadow:0 0 0 2px var(--ink),inset 0 0 0 2px var(--tc),0 0 24px -4px var(--tc)}
+.rwin .wthumb{margin:0}
+.rwin i{display:block;font-style:normal;font-size:12px;font-weight:700}
+.rwin b{display:block;font-size:18px;color:var(--gold2);margin:2px 0}
+.rwin small{color:var(--dim);font-size:13px}
+.odds{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 14px;font-size:13px;margin:16px 0 14px}
+.odds small{color:var(--dim)}
+.odds .tiReq{flex-basis:100%}
+
+.recTabs{display:flex;gap:10px;justify-content:center;margin:4px 0 12px}
+.recTabs:empty{display:none}
+.recTabs .ttab{flex-direction:row;padding:8px 14px 6px;font-size:14px}
+.nameRow{display:flex;gap:8px;align-items:center;justify-content:center;margin-bottom:10px;font-size:14px;color:var(--dim)}
+.nameRow input{font-family:var(--pix);font-size:16px;color:var(--txt);background:#160f2c;border:0;padding:8px 10px;width:170px;min-width:0;
+  box-shadow:0 0 0 2px var(--ink),inset 0 0 0 2px var(--edge);user-select:text;-webkit-user-select:text;touch-action:manipulation}
+.nameRow input:focus{outline:none;box-shadow:0 0 0 2px var(--ink),inset 0 0 0 2px var(--gold)}
+.nameRow .pbtn{padding:10px 14px 8px}
+.recBest{font-size:14px;color:var(--dim);margin-bottom:10px}
+.recBest b{color:var(--gold2)}
+.recTable{margin-bottom:16px}
+.rtab{width:100%;border-collapse:collapse;font-size:15px}
+.rtab th{font-size:12px;color:var(--dim);font-weight:600;padding:6px 4px}
+.rtab td{padding:7px 4px;text-align:center;border-top:2px solid #2e2358}
+.rtab td.nm{text-align:left;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--gold2)}
+.rtab tr.me td{background:rgba(255,210,90,.13)}
+.recNote{font-size:14px;color:var(--dim);margin:10px 0}
+.recNote b{color:var(--gold2)}
+
+@media (max-width:600px){
+  .wardTop{grid-template-columns:130px minmax(0,1fr);gap:12px}
+  #wardPrev{width:130px;height:140px}
+  .slotTabs{gap:5px}
+  .slotTabs .ttab{font-size:20px;padding:7px 0 5px}
+  .slotTabs .ttab span{display:none}
+  #wardM .wardrobe{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px 10px;padding:6px 4px}
+  #wardM .wcard{padding:10px 4px 8px;overflow-wrap:anywhere}
+  #wardM .wcard b{font-size:13px}
+  #wardM .wcard small{font-size:11.5px}
+  .rtab{font-size:13.5px}
+  .rtab th{font-size:11px}
+  .rtab td.nm{max-width:96px}
+}
+@media (max-height:560px) and (orientation:landscape){
+  #wardPrev{height:150px}
+  .reel{height:96px}.rtile{height:76px}
+}

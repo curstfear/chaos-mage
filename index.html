@@ -11,6 +11,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
+<meta name="application-name" content="Маг Хаоса">
 <title>Маг Хаоса</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -21,6 +22,7 @@
 <link rel="stylesheet" href="css/workshop.css">
 <link rel="stylesheet" href="css/cards.css">
 <link rel="stylesheet" href="css/menu.css">
+<link rel="stylesheet" href="css/outfit.css">
 <link rel="stylesheet" href="css/mobile.css">
 </head>
 <body>
@@ -49,7 +51,7 @@
 <div id="menuM" class="modal menu show">
   <div class="menuTop">
     <h1 class="ttl menuTitle">МАГ ХАОСА</h1>
-    <div class="shardPill" id="menuShards"></div>
+    <div class="pills"><div class="shardPill" id="menuShards"></div><div class="shardPill" id="menuCoins"></div></div>
   </div>
   <div id="menuStage"></div>
   <div class="menuBtns">
@@ -57,6 +59,8 @@
     <div class="menuRow">
       <button class="mbtn" id="treeBtn"><span>🌳</span>ПРОКАЧКА</button>
       <button class="mbtn" id="wardBtn"><span>👘</span>ГАРДЕРОБ</button>
+      <button class="mbtn" id="rollMenuBtn"><span>🎰</span>РУЛЕТКА</button>
+      <button class="mbtn" id="recBtn"><span>🏆</span>РЕКОРДЫ</button>
       <button class="mbtn" id="setBtn"><span>⚙️</span>НАСТРОЙКИ</button>
       <button class="mbtn" id="helpBtn"><span>📖</span>КАК ИГРАТЬ</button>
     </div>
@@ -93,7 +97,9 @@
     <button class="opt" data-opt="sound"></button>
     <button class="opt" data-opt="music"></button>
     <button class="opt" data-opt="shake"></button>
+    <button class="opt" id="installBtn" hidden>📲 Установить на главный экран</button>
   </div>
+  <div class="sub" id="installHow" hidden></div>
   <button class="pbtn" id="setClose">ГОТОВО</button>
 </div></div>
 
@@ -169,21 +175,49 @@
   <div class="btnrow"><button class="pbtn" id="againBtn">ЕЩЁ РАЗ</button><button class="pbtn alt" id="deadTree">🌳 ПРОКАЧКА</button><button class="pbtn alt" id="menuBtn">В МЕНЮ</button></div>
 </div></div>
 
-<div id="wardM" class="modal"><div class="box frame center" style="max-width:820px">
-  <h2 class="ttl">ГАРДЕРОБ</h2>
-  <div class="sub">Костюмы открываются за достижения и сохраняются между забегами. Они меняют только вид мага.</div>
+<!-- гардероб: слева примерочная (холст рисует js/ui/wardrobe.js), справа вещь; ниже вкладки слотов и вещи -->
+<div id="wardM" class="modal"><div class="box frame" style="max-width:900px">
+  <div class="treeHead"><h2 class="ttl">ГАРДЕРОБ</h2><div class="shardPill" id="wardCoins"></div></div>
+  <div class="wardTop">
+    <canvas id="wardPrev"></canvas>
+    <div class="treeInfo wardInfo" id="wardInfo"></div>
+  </div>
+  <div class="slotTabs" id="slotTabs"></div>
   <div class="wardrobe" id="wardUI"></div>
-  <button class="pbtn" id="wardClose">ГОТОВО</button>
+  <div class="foot"><button class="pbtn alt" id="wardRoll">🎰 РУЛЕТКА</button><button class="pbtn" id="wardClose">ГОТОВО</button></div>
+</div></div>
+
+<div id="rollM" class="modal"><div class="box frame center" style="max-width:720px">
+  <div class="treeHead"><h2 class="ttl">РУЛЕТКА</h2><div class="shardPill" id="rollCoins"></div></div>
+  <div class="sub">Вещи отсюда не купить в магазине. Каждый прокрут — честный бросок: может выпасть легенда, а может то же ведро в пятый раз.</div>
+  <div class="reel" id="reel"><div class="reelTrack" id="reelTrack"></div><div class="reelMark"></div></div>
+  <div class="rollRes" id="rollRes"></div>
+  <div class="btnrow"><button class="pbtn" id="rollBtn"></button><button class="pbtn alt" id="rollWear" hidden>НАДЕТЬ</button></div>
+  <div class="odds" id="rollOdds"></div>
+  <button class="pbtn alt" id="rollClose">ГОТОВО</button>
+</div></div>
+
+<div id="recM" class="modal"><div class="box frame center" style="max-width:640px">
+  <h2 class="ttl">РЕКОРДЫ</h2>
+  <div class="recTabs" id="recTabs"></div>
+  <div class="nameRow" id="nameRow"><span>Твоё имя:</span><input id="nameIn" maxlength="16" autocomplete="off" spellcheck="false" enterkeyhint="done"><button class="pbtn alt" id="nameSave">OK</button></div>
+  <div class="recBest" id="recBest"></div>
+  <div class="recTable" id="recTable"></div>
+  <button class="pbtn" id="recClose">ГОТОВО</button>
 </div></div>
 
 <script src="js/core/utils.js"></script>
 <script src="js/data/runes.js"></script>
 <script src="js/data/worlds.js"></script>
 <script src="js/data/upgrades.js"></script>
+<script src="js/data/outfit.js"></script>
 <script src="js/core/settings.js"></script>
 <script src="js/core/meta.js"></script>
+<script src="js/core/online.js"></script>
+<script src="js/core/wardrobe.js"></script>
 <script src="js/core/audio.js"></script>
 <script src="js/sprites/mage-and-enemies.js"></script>
+<script src="js/sprites/mage.js"></script>
 <script src="js/sprites/pets.js"></script>
 <script src="js/sprites/world.js"></script>
 <script src="js/core/canvas.js"></script>
@@ -193,6 +227,10 @@
 <script src="js/core/touch.js"></script>
 <script src="js/ui/modals.js"></script>
 <script src="js/ui/menu.js"></script>
+<script src="js/ui/install.js"></script>
+<script src="js/ui/wardrobe.js"></script>
+<script src="js/ui/roulette.js"></script>
+<script src="js/ui/records.js"></script>
 <script src="js/game/world.js"></script>
 <script src="js/game/skills.js"></script>
 <script src="js/game/grid.js"></script>
@@ -201,6 +239,7 @@
 <script src="js/game/enemies.js"></script>
 <script src="js/game/effects.js"></script>
 <script src="js/game/update.js"></script>
+<script src="js/render/trail.js"></script>
 <script src="js/render/render.js"></script>
 <script src="js/render/menu-scene.js"></script>
 <script src="js/ui/hud.js"></script>

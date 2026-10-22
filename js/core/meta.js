@@ -1,6 +1,8 @@
 // ---------- прогресс между забегами ----------
-// 💠 осколки хаоса копятся за забеги и тратятся в дереве прокачки (data/upgrades.js).
-const META = { shards: 0, up: {}, runs: 0, bestSec: 0, kills: 0 };
+// 💠 осколки хаоса копятся за забеги и тратятся в дереве прокачки (data/upgrades.js),
+// 🪙 монеты — в гардеробе и рулетке (core/wardrobe.js).
+// best — личные рекорды, top — 10 лучших забегов по очкам, player — имя и ключи для общего рейтинга (core/online.js).
+const META = { shards: 0, coins: 0, up: {}, runs: 0, bestSec: 0, kills: 0, best: { score: 0, kills: 0, level: 0 }, top: [], player: null };
 try { Object.assign(META, JSON.parse(localStorage.getItem('chaosMageMeta') || '{}')); } catch (e) {}
 const saveMeta = () => { try { localStorage.setItem('chaosMageMeta', JSON.stringify(META)); } catch (e) {} };
 
@@ -45,10 +47,20 @@ function runReward(){
   const base = parts.reduce((s, [, v]) => s + v, 0);
   return { parts, total: Math.round(base * PACT.shards), bonus: PACT.shards > 1 ? Math.round(base * (PACT.shards - 1)) : 0 };
 }
+// очки забега — по ним строится таблица рекордов
+const runScore = () => kills * 10 + Math.floor(tick / 60) * 2 + (level - 1) * 50 + bossCount * 500;
+// монеты: немного за каждый забег, чуть больше за долгий и с боссами
+const runCoins = () => 2 + Math.floor(tick / 60 / 30) + Math.floor(kills / 100) + bossCount * 4 + Math.floor(level / 5);
 function finishRun(){
-  const r = runReward();
-  META.shards += r.total; META.runs++; META.kills += kills;
-  META.bestSec = Math.max(META.bestSec, Math.floor(tick / 60));
+  const r = runReward(), sec = Math.floor(tick / 60);
+  r.score = runScore(); r.coins = runCoins(); r.record = r.score > META.best.score;
+  META.shards += r.total; META.coins += r.coins; META.runs++; META.kills += kills;
+  META.bestSec = Math.max(META.bestSec, sec);
+  const B = META.best;
+  B.score = Math.max(B.score, r.score); B.kills = Math.max(B.kills, kills); B.level = Math.max(B.level, level);
+  META.top.push({ score: r.score, kills, level, sec, biome: RUN.biome, at: Date.now() });
+  META.top.sort((a, b) => b.score - a.score); META.top.length = Math.min(META.top.length, 10);
   saveMeta();
+  submitScore(true);
   return r;
 }
