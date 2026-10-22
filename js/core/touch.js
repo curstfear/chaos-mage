@@ -1,16 +1,17 @@
 // ---------- сенсорное управление ----------
-// Левая половина экрана — плавающий джойстик: где коснулся, там и центр.
-// Правая половина — ручной прицел: веди пальцем, и навыки летят туда. Короткий тап справа — рывок.
-// Если правую половину не трогать, навыки бьют по ближайшему врагу (updateAutoAim в core/input.js).
-const STICK_R = 56;
-const touchPads = { move: null, aim: null }; // активные касания: { id, x0, y0, t0, moved }
+// Палец в любом месте экрана — плавающий джойстик: где коснулся, там и центр.
+// Короткий тап без движения — рывок: в сторону тапа или, если другим пальцем бежишь, по направлению бега.
+// Целиться на телефоне не нужно: навыки сами бьют ближайшего врага (updateAutoAim в core/input.js).
+const STICK_R = 56, TAP_MS = 250, TAP_MOVE = 10;
+const fingers = new Map(); // id касания → { x0, y0, t0, moved }
+let stickId = null;        // какой палец сейчас ведёт джойстик
 
 function padVector(p, e){
   let dx = e.clientX - p.x0, dy = e.clientY - p.y0;
   const d = Math.hypot(dx, dy);
   // палец ушёл дальше радиуса — центр едет следом, чтобы не приходилось возвращаться
   if (d > STICK_R){ p.x0 = e.clientX - dx / d * STICK_R; p.y0 = e.clientY - dy / d * STICK_R; dx = dx / d * STICK_R; dy = dy / d * STICK_R; }
-  return [dx / STICK_R, dy / STICK_R, d];
+  return [dx / STICK_R, dy / STICK_R];
 }
 function showStick(p, kx, ky){
   const base = $('stickBase'), knob = $('stickKnob');
@@ -23,46 +24,36 @@ function showStick(p, kx, ky){
 cv.addEventListener('pointerdown', e => {
   if (e.pointerType === 'mouse' || state !== 'play') return;
   e.preventDefault();
-  const side = e.clientX < innerWidth / 2 ? 'move' : 'aim';
-  if (touchPads[side]) return;
-  touchPads[side] = { id: e.pointerId, x0: e.clientX, y0: e.clientY, t0: performance.now(), moved: false };
+  fingers.set(e.pointerId, { x0: e.clientX, y0: e.clientY, sx: e.clientX, sy: e.clientY, t0: performance.now(), moved: false });
   cv.setPointerCapture(e.pointerId);
-  if (side === 'move') showStick(touchPads.move, 0, 0);
 });
 cv.addEventListener('pointermove', e => {
-  for (const side of ['move', 'aim']){
-    const p = touchPads[side];
-    if (!p || p.id !== e.pointerId) continue;
-    const [x, y, d] = padVector(p, e);
-    if (d > 10) p.moved = true;
-    if (side === 'move'){
-      const l = Math.hypot(x, y), k = l < 0.15 ? 0 : Math.min(1, (l - 0.15) / 0.75) / l; // мёртвая зона в центре
-      stick.x = x * k; stick.y = y * k;
-      showStick(p, x, y);
-    } else if (p.moved){
-      const l = Math.hypot(x, y) || 1;
-      aimStick.x = x / l; aimStick.y = y / l; aimStick.on = true;
-    }
+  const p = fingers.get(e.pointerId);
+  if (!p) return;
+  if (!p.moved && Math.hypot(e.clientX - p.sx, e.clientY - p.sy) > TAP_MOVE){
+    p.moved = true;
+    if (stickId === null) stickId = e.pointerId; // джойстиком становится первый палец, который поехал
   }
+  if (stickId !== e.pointerId) return;
+  const [x, y] = padVector(p, e);
+  const l = Math.hypot(x, y), k = l < 0.15 ? 0 : Math.min(1, (l - 0.15) / 0.75) / l; // мёртвая зона в центре
+  stick.x = x * k; stick.y = y * k;
+  showStick(p, x, y);
 });
-function releasePad(e){
-  for (const side of ['move', 'aim']){
-    const p = touchPads[side];
-    if (!p || p.id !== e.pointerId) continue;
-    touchPads[side] = null;
-    if (side === 'move'){ stick.x = stick.y = 0; showStick(null); }
-    else {
-      aimStick.on = false;
-      if (!p.moved && performance.now() - p.t0 < 250 && state === 'play') doDash();
-    }
-  }
+function releaseFinger(e){
+  const p = fingers.get(e.pointerId);
+  if (!p) return;
+  fingers.delete(e.pointerId);
+  if (stickId === e.pointerId){ stickId = null; stick.x = stick.y = 0; showStick(null); }
+  else if (e.type === 'pointerup' && !p.moved && performance.now() - p.t0 < TAP_MS && state === 'play')
+    doDash(p.sx / ZOOM - W / 2 + cam.x, p.sy / ZOOM - H / 2 + cam.y);
 }
-cv.addEventListener('pointerup', releasePad);
-cv.addEventListener('pointercancel', releasePad);
+cv.addEventListener('pointerup', releaseFinger);
+cv.addEventListener('pointercancel', releaseFinger);
 // любое окно поверх игры сбрасывает пальцы, иначе маг продолжит бежать сам
 function resetTouch(){
-  touchPads.move = touchPads.aim = null;
-  stick.x = stick.y = 0; aimStick.on = false;
+  fingers.clear(); stickId = null;
+  stick.x = stick.y = 0;
   showStick(null);
 }
 
@@ -81,14 +72,12 @@ addEventListener('scroll', () => { if (scrollX || scrollY) scrollTo(0, 0); });
 function tapButton(id, fn){
   $(id).addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); fn(); });
 }
-tapButton('tDash', () => { if (state === 'play') doDash(); });
 tapButton('tCraft', () => { if (state === 'play') openCraft(); });
 tapButton('tPause', () => { if (state === 'play') openPause(); });
 
-// кнопки обновляются вместе с HUD: перезарядка рывка и сколько рун ждёт в мастерской
+// кнопки обновляются вместе с HUD: сколько рун ждёт в мастерской
 function updTouchUI(){
   if (!TOUCH) return;
-  $('tDash').style.setProperty('--cd', player.dashCd > 0 ? player.dashCd / 48 : 0);
   const n = inventory.length ? String(inventory.length) : '';
   if ($('tCraftN').textContent !== n) $('tCraftN').textContent = n;
 }

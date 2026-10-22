@@ -532,8 +532,8 @@ function render(){
     drawText(b.text, W / 2, H * 0.24 + i * 36 * TXT, 24, b.color);
   });
   ctx.globalAlpha = 1;
-  // пиксельный прицел: на ПК под курсором, с пальцами — на цели автоприцела или по направлению правого стика
-  if (state === 'play' && (!TOUCH || autoTarget || aimStick.on)){
+  // пиксельный прицел: на ПК под курсором, на телефоне — на цели автоприцела
+  if (state === 'play' && (!TOUCH || autoTarget)){
     const [ax, ay] = aimWorld();
     const x = Math.round(TOUCH ? ax - cam.x + W / 2 : mouse.x), y = Math.round(TOUCH ? ay - cam.y + H / 2 : mouse.y);
     ctx.fillStyle = '#0b0618';

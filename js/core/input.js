@@ -38,8 +38,7 @@ function moveDir(){
   return [mx, my];
 }
 
-// прицел: на ПК — курсор; с пальцами — правый стик, а если его не трогают, ближайший враг
-const aimStick = { x: 0, y: 0, on: false };
+// прицел: на ПК — курсор; на телефоне только автоприцел по ближайшему врагу
 let autoAim = [0, 0], autoTarget = null;
 const AUTO_AIM_R = 520;
 function updateAutoAim(){
@@ -55,14 +54,14 @@ function updateAutoAim(){
 }
 function aimWorld(){
   if (!TOUCH) return [mouse.x - W / 2 + cam.x, mouse.y - H / 2 + cam.y];
-  if (aimStick.on) return [player.x + aimStick.x * 220, player.y + aimStick.y * 220];
   return autoAim;
 }
 
-function doDash(){
+// рывок: по направлению бега; если стоишь — к точке tx,ty (тап на телефоне) или к прицелу
+function doDash(tx, ty){
   if (player.dashCd > 0) return;
   let [dx, dy] = moveDir();
-  if (!dx && !dy){ const [ax, ay] = aimWorld(); dx = ax - player.x; dy = ay - player.y; }
+  if (!dx && !dy){ const [ax, ay] = tx === undefined ? aimWorld() : [tx, ty]; dx = ax - player.x; dy = ay - player.y; }
   const d = Math.hypot(dx, dy) || 1;
   player.vx = dx / d * 13; player.vy = dy / d * 13;
   player.dash = 11; player.dashCd = 48; player.inv = Math.max(player.inv, 16);

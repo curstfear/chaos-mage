@@ -26,17 +26,13 @@ body.touch[data-state=play] #touchUI{display:block}
   font-size:26px;background:radial-gradient(circle at 50% 35%,#3a2b6e,#160f2c 80%);
   box-shadow:0 0 0 2px var(--ink),0 0 0 4px var(--edge),0 0 0 6px var(--ink),0 5px 0 5px rgba(0,0,0,.35)}
 .tbtn:active{filter:brightness(1.35);transform:translateY(2px)}
-#tDash{right:calc(26px + env(safe-area-inset-right));bottom:calc(30px + env(safe-area-inset-bottom));width:76px;height:76px;font-size:32px;
-  box-shadow:0 0 0 2px var(--ink),0 0 0 4px var(--gold),0 0 0 6px var(--ink),0 5px 0 5px rgba(0,0,0,.35)}
-/* перезарядка рывка: --cd от 1 (только что) до 0 (готов) */
-#tDash::after{content:"";position:absolute;inset:0;background:conic-gradient(rgba(8,4,20,.75) calc(var(--cd,0) * 1turn),transparent 0)}
-#tCraft{right:calc(34px + env(safe-area-inset-right));bottom:calc(132px + env(safe-area-inset-bottom));width:60px;height:60px}
+#tCraft{right:calc(22px + env(safe-area-inset-right));bottom:calc(26px + env(safe-area-inset-bottom));width:64px;height:64px}
 #tCraftN{position:absolute;right:-8px;top:-8px;min-width:20px;padding:4px 3px 2px;box-sizing:border-box;font-family:var(--big);font-size:9px;color:var(--ink);
   background:var(--gold);box-shadow:0 0 0 2px var(--ink)}
 #tCraftN:empty{display:none}
 #tPause{top:calc(86px + env(safe-area-inset-top));right:calc(14px + env(safe-area-inset-right));width:44px;height:44px;font-size:20px}
 /* панель навыков не должна залезать под кнопки справа: закрытые слоты прячем, лишнее переносим вверх */
-body.touch #skillbar{bottom:calc(16px + env(safe-area-inset-bottom));max-width:calc(100vw - 260px);flex-wrap:wrap-reverse;justify-content:center;row-gap:12px}
+body.touch #skillbar{bottom:calc(16px + env(safe-area-inset-bottom));max-width:calc(100vw - 200px);flex-wrap:wrap-reverse;justify-content:center;row-gap:12px}
 body.touch .sk.locked{display:none}
 
 /* маленький экран (телефон в любой ориентации) */
@@ -78,7 +74,7 @@ body.touch .sk.locked{display:none}
 body.touch .keys kbd{font-size:16px;padding:4px 6px 3px}
 /* узкий телефон стоя */
 @media (max-width:600px){
-  body.touch #skillbar{left:calc(12px + env(safe-area-inset-left));transform:none;max-width:calc(100vw - 130px);justify-content:flex-start}
+  body.touch #skillbar{left:calc(12px + env(safe-area-inset-left));transform:none;max-width:calc(100vw - 110px);justify-content:flex-start}
 }
 @media (max-width:420px){
   .sock{width:44px;height:44px}

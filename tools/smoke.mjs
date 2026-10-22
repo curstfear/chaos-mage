@@ -46,6 +46,9 @@ for (const prof of PROFILES){
     if (visualViewport && visualViewport.scale !== 1) bad.push(`зум ${visualViewport.scale}`);
     const de = document.documentElement;
     if (de.scrollWidth > innerWidth || de.scrollHeight > innerHeight) bad.push(`страница ${de.scrollWidth}×${de.scrollHeight} больше экрана`);
+    // окно может прокручиваться только вертикально: лишняя ширина = «невидимый слайдер» под пальцем
+    for (const box of document.querySelectorAll('.modal.show .box'))
+      if (box.scrollWidth > box.clientWidth + 1) bad.push(`окно #${box.parentElement.id} шире экрана: ${box.scrollWidth} > ${box.clientWidth}`);
     for (const el of document.querySelectorAll('body *')){
       if (!el.checkVisibility || !el.checkVisibility({ visibilityProperty: true })) continue;
       if (el.closest('.box') && !el.matches('.box')) continue; // внутри окна прокрутка разрешена
