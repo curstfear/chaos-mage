@@ -157,6 +157,36 @@ for (const prof of PROFILES){
     if (touch && n && !(await g('!!autoTarget'))) throw new Error('автоприцел не выбрал цель');
     await shot('4-fight');
   });
+  // новый контент гоняем на ПК и на телефоне стоя — этого хватает, чтобы поймать ошибки
+  if (prof.name === 'desktop' || prof.name === 'phone-portrait') await step('новые формы, враги, боссы и миры', async () => {
+    const FORMS = {
+      deck: 'projs.some(p => p.card)', billiard: 'projs.some(p => p.billiard) || enemies.some(e => e.fly > 0)',
+      trail: "projs.some(p => p.kind === 'puff')", debt: 'enemies.some(e => e.debt)', tether: 'ties.length > 0',
+      seed: "projs.some(p => p.kind === 'seed')", prism: "projs.filter(p => p.kind === 'prism').length === 1",
+      bait: "projs.filter(p => p.kind === 'bait').length === 1", sigil: "projs.filter(p => p.kind === 'sigil').length === 1",
+      shadow: "projs.filter(p => p.kind === 'shade').length === 1"
+    };
+    for (const [f, check] of Object.entries(FORMS)){
+      await g(`level = 12; slots[0] = { form: '${f}', element: 'fire', mods: ['trigger', 'multi', null] };
+        slots[1] = { form: 'bolt', element: null, mods: ['echo', null, null] }; recompile(); cds.fill(1);
+        for (let k = 0; k < 8; k++) spawnEnemy('brute', player.x + 110 + (k % 4) * 40, player.y + (k - 4) * 34, true, true);`);
+      // ждём, пока форма проявится, до 1.5 с
+      let ok = false;
+      for (let t = 0; t < 30 && !ok; t++){ ok = await g(check); if (!ok) await sleep(50); }
+      if (!ok) throw new Error(`форма ${f} не сработала (${check})`);
+      await sleep(300);
+    }
+    await shot('10-forms');
+    await g(`for (const t of ['bomber', 'bomber', 'shield', 'shield', 'queen', 'clock']) spawnEnemy(t, player.x + rnd(-260, 260), player.y + rnd(-200, 200), false, true)`);
+    await sleep(4000);
+    await shot('11-bosses');
+    for (const [biome, hazard] of [['caves', 'resonator'], ['desert', 'quicksand']]){
+      await g(`startRun(); RUN.biome = '${biome}'; chunks.clear(); groundPat = null; choosePact('swarm'); player.hp = player.maxHp = 1e9`);
+      await sleep(2500);
+      if (!(await g(`nearProps.some(h => h.kind === '${hazard}')`))) throw new Error(`в мире ${biome} нет опасности ${hazard}`);
+      await shot(`12-${biome}`);
+    }
+  });
   await step('выпадение «Цепи»', async () => {
     const n = await g("inventory.filter(r => r === 'trigger').length");
     await g("dropRune(player.x + 260, player.y - 40, 'trigger')");
@@ -188,7 +218,7 @@ for (const prof of PROFILES){
   });
   await step('смерть, награда и новый забег', async () => {
     const shards = await g('META.shards');
-    await g('player.hp = -100');
+    await g('tick = Math.max(tick, 600); player.hp = -100'); // забег должен длиться хоть немного, иначе награда 0
     await sleep(500);
     if (await g('state') !== 'dead') throw new Error('state = ' + await g('state'));
     if (!(await g('META.shards') > shards)) throw new Error('осколки не начислились');

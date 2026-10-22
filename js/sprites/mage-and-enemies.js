@@ -253,6 +253,74 @@ function goblinSprite(f){
   outline(b, OUT);
   return toCanvas(b);
 }
+// бомба на ножках с горящим фитилём
+function bomberSprite(f){
+  const b = PB(20, 24), st = f ? 1 : -1;
+  line(b, 7, 19, 6 + st, 23, '#2a1a10'); line(b, 13, 19, 14 - st, 23, '#2a1a10');
+  ball(b, 10, 13, 8, 8, '#3a3446', '#1e1a28', '#7a7290');
+  rect(b, 8, 3, 4, 3, '#5a5470'); line(b, 10, 3, 12 + st, 0, '#c8a070');
+  pset(b, 12 + st, 0, '#ffe08a'); pset(b, 13 + st, 0, '#ff8a3d'); pset(b, 12 + st, 1, '#ff8a3d');
+  eye2(b, 7, 12, '#ff3d3d'); eye2(b, 13, 12, '#ff3d3d');
+  line(b, 7, 16, 13, 16, '#0a0812');
+  outline(b, OUT);
+  return toCanvas(b);
+}
+// рыцарь-щитоносец: щит всегда смотрит на мага (спрайт повёрнут вправо)
+function shieldSprite(f){
+  const b = PB(26, 30), st = f ? 1 : -1;
+  rect(b, 8, 24, 3, 5 + st, '#4a4a5a'); rect(b, 14, 24, 3, 5 - st, '#4a4a5a');
+  rect(b, 6, 12, 13, 13, '#8a92a8'); rect(b, 13, 12, 6, 13, '#6a7288', '#8a92a8'); line(b, 6, 18, 18, 18, '#4a5068');
+  ball(b, 12, 7, 6, 6, '#a8b0c4', '#6a7288', '#e0e6f2'); rect(b, 9, 7, 7, 2, '#1a1a24'); pset(b, 14, 7, '#ff3d3d');
+  line(b, 12, 0, 12, 2, '#ff3d5a'); line(b, 11, 1, 13, 1, '#ff3d5a');
+  // большой щит спереди
+  rect(b, 18, 8, 7, 18, '#c8a050'); rect(b, 19, 9, 5, 16, '#e8c870', '#c8a050'); line(b, 21, 10, 21, 23, '#a87a30'); line(b, 19, 15, 24, 15, '#a87a30');
+  pset(b, 21, 15, '#ff3d5a');
+  outline(b, OUT);
+  return toCanvas(b);
+}
+function waspSprite(f){
+  const b = PB(16, 14);
+  disc(b, 5, f ? 2.5 : 3.5, 3.6, 2.2, 'rgba(220,240,255,.85)'); disc(b, 11, f ? 2.5 : 3.5, 3.6, 2.2, 'rgba(220,240,255,.85)');
+  ball(b, 8, 8, 5, 4, '#ffd23a', '#c89a10', '#fff0a0');
+  for (const x of [6, 9]) line(b, x, 5, x, 11, '#1a1408', '#ffd23a');
+  tri(b, 13, 7, 16, 8, 13, 10, '#1a1408'); eye2(b, 4, 7, '#1a0808');
+  outline(b, OUT);
+  return toCanvas(b);
+}
+function queenSprite(f){
+  const b = PB(44, 40), w = f ? 2 : 0;
+  // крылья
+  disc(b, 11, 10 - w, 10, 6, 'rgba(220,240,255,.75)'); disc(b, 33, 10 - w, 10, 6, 'rgba(220,240,255,.75)');
+  disc(b, 13, 17 + w, 7, 4, 'rgba(200,230,255,.6)'); disc(b, 31, 17 + w, 7, 4, 'rgba(200,230,255,.6)');
+  // брюшко в полоску и грудь
+  ball(b, 22, 29, 10, 9, '#ffcc33', '#c8901a', '#fff0a0');
+  for (const y of [25, 29, 33]) line(b, 13, y, 31, y, '#2a1a08', '#ffcc33');
+  tri(b, 19, 37, 22, 40, 25, 37, '#2a1a08');
+  ball(b, 22, 17, 7, 6, '#4a3410', '#2a1a08', '#7a5a20');
+  ball(b, 22, 9, 6, 5, '#ffcc33', '#c8901a', '#fff0a0');
+  rect(b, 17, 9, 4, 3, '#2a0a1a'); rect(b, 23, 9, 4, 3, '#2a0a1a'); pset(b, 18, 10, '#ff4f8b'); pset(b, 24, 10, '#ff4f8b');
+  // корона и усики
+  rect(b, 18, 2, 8, 2, '#ffd25a'); for (const x of [18, 21, 24]) tri(b, x, 2, x + 1, -1, x + 2, 2, '#ffd25a');
+  line(b, 19, 4, 15, 0, '#2a1a08'); line(b, 25, 4, 29, 0, '#2a1a08');
+  outline(b, OUT);
+  return toCanvas(b);
+}
+// Часовщик: парящий циферблат в мантии со стрелками
+function clockSprite(f){
+  const b = PB(42, 46), sw = f ? 1 : -1;
+  tri(b, 21, 18, 6, 44, 36, 44, '#1e3a5a'); tri(b, 21, 18, 21, 44, 36, 44, '#142840', '#1e3a5a');
+  for (const x of [7, 13, 19, 25, 31]) tri(b, x, 42, x + 2.5, 46, x + 5, 42, '#1e3a5a');
+  line(b, 12, 34, 30, 34, '#7fe8ff', true);
+  // циферблат вместо головы
+  disc(b, 21, 15, 13, 13, '#c8a050'); disc(b, 21, 15, 11, 11, '#f4ecd8');
+  for (let k = 0; k < 12; k++){ const a = k / 12 * TAU; pset(b, 21 + Math.cos(a) * 9, 15 + Math.sin(a) * 9, k % 3 ? '#8a7a60' : '#1a1a24'); }
+  line(b, 21, 15, 21, 7, '#1a1a24'); line(b, 21, 15, 21 + 6 * sw, 18, '#1a1a24'); pset(b, 21, 15, '#ff3d5a');
+  disc(b, 21, 1.5, 2.5, 2, '#c8a050');
+  // маятник в руке
+  line(b, 37, 22, 37 + sw * 2, 34, '#c8a050'); disc(b, 37 + sw * 2, 35, 2.5, 2.5, '#7fe8ff');
+  outline(b, '#0a0012');
+  return toCanvas(b);
+}
 function crystalSprite(col){
   const b = PB(22, 24), dk = mix(col, '#000000', 0.4), lt = mix(col, '#ffffff', 0.5);
   tri(b, 2, 22, 4.5, 10, 8, 22, col); tri(b, 4.5, 10, 8, 22, 5, 22, dk, col);

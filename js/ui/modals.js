@@ -92,7 +92,7 @@ function renderCraft(){
   $('slotsUI').innerHTML = slots.map((s, i) => {
     if (i >= un) return `<div class="slot locked"><div class="hd"><b>Слот ${i + 1}</b><small>🔒 откроется на ${SLOT_UNLOCK[i]} уровне</small></div></div>`;
     const c = compiled[i];
-    const stats = c ? `урон ${c.dmg.toFixed(0)} · раз в ${(c.cd / 60).toFixed(2)} с<br>всего ${Math.round(slotDmg[i])}` : 'вставь форму';
+    const stats = c ? `${c.dmg ? 'урон ' + c.dmg.toFixed(0) : 'поддержка'} · раз в ${(c.cd / 60).toFixed(2)} с<br>всего ${Math.round(slotDmg[i])}` : 'вставь форму';
     return `<div class="slot"><div class="hd"><b>${i + 1}. ${skillName(s)}</b><small>${stats}</small></div><div class="sockets">` +
       socketHTML(i, 'form', 0, s.form) + socketHTML(i, 'el', 0, s.element) + '<span class="vsep"></span>' +
       s.mods.map((m, j) => socketHTML(i, 'mod', j, m)).join('') + '</div></div>';

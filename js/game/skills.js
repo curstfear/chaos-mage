@@ -4,6 +4,8 @@ function nextSlot(i){
   return -1;
 }
 function spawnProj(p){ if (projs.length < 900) projs.push(p); }
+// масти «Колоды»: значок и цвет карты
+const SUITS = { spade: { g: '♠', c: '#e8e0ff' }, heart: { g: '♥', c: '#ff4f6e' }, diamond: { g: '♦', c: '#ffd25a' }, club: { g: '♣', c: '#7fe8ff' } };
 function cast(i, ox, oy, ang, depth, isEcho, Sover){
   let S = Sover || compiled[i]; if (!S) return;
   if (S.wild && !Sover){ const ex = []; for (let k = 0; k < 2 * S.wild; k++) ex.push(pick(SAFE_WILD)); S = compile(slots[i], ex); }
@@ -184,6 +186,92 @@ function cast(i, ox, oy, ang, depth, isEcho, Sover){
           const a = A + (k - (n - 1) / 2) * 0.25;
           spawnProj({ ...base, kind: 'bolt', x: ox, y: oy, vx: Math.cos(a) * 7.5 * S.speed, vy: Math.sin(a) * 7.5 * S.speed, r: 7 * S.size,
                       life: 110 * S.range * (S.spiral ? 1.4 : 1), wig: 0.11, wt: k * 1.5, pierce: base.pierce + 3, curve: S.spiral * 0.03, hit: new Set() });
+        }
+      } break;
+      // ---------- новые формы: спамятся ----------
+      case 'deck': {
+        // карта случайной масти, масть решает, что будет при попадании (hitEnemy)
+        const n = 1 + S.multi;
+        for (let k = 0; k < n; k++){
+          const a = A + (k - (n - 1) / 2) * 0.22, suit = pick(Object.keys(SUITS));
+          spawnProj({ ...base, kind: 'bolt', card: suit, dmg: base.dmg * (suit === 'spade' ? 1.7 : 1), x: ox, y: oy,
+                      vx: Math.cos(a) * 8.5 * S.speed, vy: Math.sin(a) * 8.5 * S.speed, r: 8 * S.size, spin: rnd(0, TAU),
+                      life: 70 * S.range * (S.spiral ? 1.7 : 1), curve: S.spiral * 0.045, hit: new Set() });
+        }
+      } break;
+      case 'billiard': {
+        const n = 1 + S.multi;
+        for (let k = 0; k < n; k++){
+          const a = A + (k - (n - 1) / 2) * 0.3;
+          spawnProj({ ...base, kind: 'bolt', billiard: true, x: ox, y: oy, vx: Math.cos(a) * 8 * S.speed, vy: Math.sin(a) * 8 * S.speed, r: 11 * S.size,
+                      life: 60 * S.range * (S.spiral ? 1.7 : 1), curve: S.spiral * 0.04, hit: new Set() });
+        }
+      } break;
+      case 'trail': {
+        if (turn) break;
+        // клякса остаётся там, где стоял маг (для «Цепи» — в точке удара); не больше 40 клякс разом
+        let have = 0; for (const p of projs) if (p.kind === 'puff') have++;
+        const n = Math.min(1 + S.multi, 40 - have);
+        for (let k = 0; k < n; k++)
+          spawnProj({ ...base, kind: 'puff', x: ox + (k ? rnd(-35, 35) : 0), y: oy + (k ? rnd(-35, 35) : 0), r: 30 * S.size,
+                      life: 180 * S.range, max: 180 * S.range, hcd: new Map(), hit: new Set() });
+      } break;
+      case 'debt': {
+        if (turn) break;
+        // метим тех, у кого ещё нет долга, иначе один враг копил бы бесконечно
+        const n = 1 + S.multi, done = new Set(enemies.filter(e => e.debt));
+        for (let k = 0; k < n; k++){
+          const t = nearest(tx, ty, 300 * S.range, done) || nearest(ox, oy, 380 * S.range, done);
+          if (!t) break;
+          done.add(t);
+          const s = { ...base, hit: new Set([t]) };
+          zaps.push({ x1: ox, y1: oy, x2: t.x, y2: t.y, life: 10, c: '#ffd700' });
+          hitEnemy(t, s, base.dmg, t.x, t.y); onImpact(s, t.x, t.y);
+          if (!t.dead && !t.static) t.debt = { t: 180, sum: 0, slot: i };
+        }
+      } break;
+      case 'tether': {
+        if (turn) break;
+        const n = 1 + S.multi;
+        for (let k = 0; k < n && ties.length < 3 + S.multi; k++){
+          const busy = new Set(); for (const T of ties){ busy.add(T.a); busy.add(T.b); }
+          const a = nearest(tx, ty, 320 * S.range, busy); if (!a) break;
+          busy.add(a);
+          const b = nearest(a.x, a.y, 260 * S.range, busy); if (!b) break;
+          ties.push({ a, b, t: 240, src: { ...base, hit: new Set() } });
+          a.tie = b; b.tie = a;
+          ring(a.x, a.y, 30, S.color); ring(b.x, b.y, 30, S.color);
+        }
+      } break;
+      case 'seed': {
+        if (turn) break;
+        const seeds = projs.filter(p => p.kind === 'seed' && p.life > 0);
+        if (seeds.length >= 3 + S.multi) seeds[0].life = 1; // старое семя расцветает досрочно
+        let mx = tx, my = ty; const d = Math.hypot(mx - ox, my - oy);
+        if (d > 260){ mx = ox + (mx - ox) / d * 260; my = oy + (my - oy) / d * 260; }
+        spawnProj({ ...base, kind: 'seed', x: mx, y: my, stage: 0, grow: 0, life: 360, max: 360, r: 12 * S.size, hit: new Set() });
+      } break;
+      // ---------- новые формы: в единственном экземпляре ----------
+      // «Цепь» не переносит такую форму, а продлевает уже стоящую, иначе её дёргало бы по всему экрану
+      case 'prism': case 'bait': case 'sigil': case 'shadow': {
+        if (turn) break;
+        const kind = S.form === 'shadow' ? 'shade' : S.form, old = projs.find(p => p.kind === kind && p.life > 0);
+        if (old && depth > 0){ old.life = Math.max(old.life, 150); break; }
+        if (old) old.life = S.form === 'bait' ? 1 : 0; // старая приманка лопается, остальное просто исчезает
+        if (S.form === 'prism'){
+          const a = Math.atan2(ty - oy, tx - ox), dd = depth === 0 && i >= 0 ? 70 : 0;
+          spawnProj({ ...base, kind: 'prism', x: ox + Math.cos(a) * dd, y: oy + Math.sin(a) * dd, r: 44 * Math.sqrt(S.size),
+                      split: 2 + S.multi, spin: 0, life: 420 * S.range, max: 420 * S.range, hit: new Set() });
+        } else if (S.form === 'bait'){
+          let mx = tx, my = ty; const d = Math.hypot(mx - ox, my - oy);
+          if (d > 280){ mx = ox + (mx - ox) / d * 280; my = oy + (my - oy) / d * 280; }
+          spawnProj({ ...base, kind: 'bait', x: mx, y: my, boomR: 140 * S.size * (1 + 0.25 * S.multi), lure: 650, life: 180, max: 180, hit: new Set() });
+        } else if (S.form === 'sigil'){
+          spawnProj({ ...base, kind: 'sigil', x: ox, y: oy, r: 115 * Math.sqrt(S.size) * (1 + 0.2 * S.multi), spin: 0,
+                      life: 300 * S.range, max: 300 * S.range, hit: new Set() });
+        } else {
+          spawnProj({ ...base, kind: 'shade', follow: depth === 0 && i >= 0, x: ox, y: oy, beat: 40, every: Math.max(18, 40 - 8 * S.multi),
+                      R: 95 * Math.sqrt(S.size), life: 360, max: 360, hit: new Set() });
         }
       } break;
       case 'familiar': {

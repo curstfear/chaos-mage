@@ -5,6 +5,7 @@ let slots, compiled, cds, inventory, slotDmg, nearProps, nearSolids, groundPat;
 let tick, kills, combo, comboTimer, bestCombo, level, xp, shake, bossTimer, bossCount, lastBoss, triggerBudget, detBudget;
 let evTimer, ev, moonT, wind;
 let pets = [], trail = [], toad = null, toadTimer = 0, wildTimer = 0, hasFeather = false, comboRuneCd = 0, mom = [];
+let ties = [], pathLog = []; // «Привязь» и путь мага для «Тени»
 let holes = [], weather = { type: 'clear', t: 0 }, gust = null, skyBolts = [], flash = 0, goldT = 0, goldTimer = 0, destroyed = 0;
 const WEATHER = {
   clear: { icon: '☀️', name: 'Ясно' },
@@ -24,7 +25,7 @@ function newGame(){
   PACT = pactStats(null);
   player = { x: 0, y: 0, vx: 0, vy: 0, r: 14, hp: PACT.hp, maxHp: PACT.hp, inv: 0, dash: 0, dashCd: 0, face: 0, onIce: false };
   enemies = []; projs = []; meteors = []; puddles = []; ebullets = []; gems = []; particles = []; amb = []; zaps = []; beams = []; slashes = [];
-  nums = []; scheduled = []; banners = []; nearProps = []; nearSolids = []; holes = [];
+  nums = []; scheduled = []; banners = []; nearProps = []; nearSolids = []; holes = []; ties = []; pathLog = [];
   pets = []; trail = []; toad = null; hasFeather = false; comboRuneCd = 0; mom = new Array(NSLOTS).fill(0);
   toadTimer = Math.round(60 * rnd(200, 260)); wildTimer = Math.round(60 * rnd(140, 180));
   slots = Array.from({ length: NSLOTS }, () => ({ form: null, element: null, mods: [null, null, null] }));

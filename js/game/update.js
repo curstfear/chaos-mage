@@ -8,7 +8,7 @@ function update(){
   const [mx, my] = moveDir();
   if (P.dash > 0){ P.dash--; if (tick % 2 === 0) particles.push({ x: P.x, y: P.y, vx: 0, vy: 0, life: 16, max: 16, color: '#ffd25a', r: 10 }); }
   else {
-    const k = P.onIce ? 0.035 : 0.25, sp = 3.3 * PACT.speed;
+    const k = P.onIce ? 0.035 : 0.25, sp = 3.3 * PACT.speed * (P.inSand ? 0.55 : 1);
     P.vx += (mx * sp - P.vx) * k; P.vy += (my * sp - P.vy) * k;
   }
   P.x += P.vx; P.y += P.vy;
@@ -18,25 +18,65 @@ function update(){
   if (RUN.pact === 'vampire') P.hp -= 1.2 / 60; else P.hp = Math.min(P.maxHp, P.hp + 0.012 + PACT.regen / 60);
   if (TOUCH) updateAutoAim();
   const [ax, ay] = aimWorld(); P.face = Math.atan2(ay - P.y, ax - P.x);
+  // путь мага за последние 2 с — по нему идёт «Тень»
+  pathLog.push(P.x, P.y); if (pathLog.length > 240) pathLog.splice(0, 2);
 
   spawner(); events();
   petsTick(); wildTick(); toadTick(); owlTick();
   if (comboRuneCd > 0) comboRuneCd--;
   buildGrid();
 
-  // навыки стреляют сами
+  // навыки стреляют сами; внутри «Печати» перезарядка идёт вдвое быстрее
+  const sigil = projs.find(p => p.kind === 'sigil' && p.life > 0);
+  P.inSigil = !!sigil && Math.hypot(P.x - sigil.x, P.y - sigil.y) < sigil.r;
   const un = unlocked();
   for (let i = 0; i < un; i++){
     if (!compiled[i]) continue;
-    if (--cds[i] <= 0){ cds[i] = compiled[i].cd; cast(i, P.x, P.y, P.face, 0, false); }
+    cds[i] -= P.inSigil ? 2 : 1;
+    if (cds[i] <= 0){ cds[i] = compiled[i].cd; cast(i, P.x, P.y, P.face, 0, false); }
   }
   for (const s of scheduled) if (--s.t === 0) s.fn();
   scheduled = scheduled.filter(s => s.t > 0);
 
   // снаряды
+  const prism = projs.find(p => p.kind === 'prism' && p.life > 0);
+  let prismBudget = 14; // сколько снарядов призма может расщепить за кадр
   for (const p of projs){
     p.life--;
-    if (p.kind === 'orb'){
+    if (p.kind === 'puff'){
+      // «Шлейф»: каждого врага в кляксе жжёт раз в треть секунды
+      near(p.x, p.y, p.r, e => {
+        if (e.static || tick - (p.hcd.get(e) || -99) < 20) return;
+        p.hcd.set(e, tick); p.hit.add(e); hitEnemy(e, p, p.dmg, e.x, e.y);
+        if (!p.first){ p.first = true; onImpact(p, e.x, e.y); }
+      });
+    } else if (p.kind === 'seed'){
+      if (p.grow > 0) p.grow--;
+      if (p.life <= 0){
+        // расцветает: чем больше убийств рядом, тем больше взрыв
+        const k = 1 + 0.35 * p.stage;
+        explode({ ...p, dmg: p.dmg * k }, p.x, p.y, (80 + 12 * p.stage) * p.size);
+        burst(p.x, p.y, 20 + p.stage * 4, '#ff9ff3', 6); burst(p.x, p.y, 14, '#9dff7a', 5);
+      }
+    } else if (p.kind === 'prism'){
+      p.spin += 0.03;
+    } else if (p.kind === 'bait'){
+      if (tick % 4 === 0) particles.push({ x: p.x + rnd(-10, 10), y: p.y - 30, vx: rnd(-1.5, 1.5), vy: rnd(-2, -0.5), life: 30, max: 30, color: pick(['#ff9ff3', '#ffe08a', '#7fe8ff']), r: 2 });
+      if (p.life <= 0){
+        explode(p, p.x, p.y, p.boomR);
+        for (const c of ['#ff9ff3', '#ffe08a', '#7fe8ff', '#9dff7a']) burst(p.x, p.y, 14, c, 7);
+      }
+    } else if (p.kind === 'sigil'){
+      p.spin += 0.02;
+      if (tick % 10 === 0) near(p.x, p.y, p.r, e => { if (!e.boss && !e.static) e.slow = Math.max(e.slow, 14); });
+    } else if (p.kind === 'shade'){
+      // тень идёт по пути мага с отставанием в 1 с и бьёт кольцом
+      if (p.follow && pathLog.length >= 2){
+        const j = Math.max(0, pathLog.length - 2 - 120);
+        p.x += (pathLog[j] - p.x) * 0.3; p.y += (pathLog[j + 1] - p.y) * 0.3;
+      }
+      if (--p.beat <= 0 && p.life < p.max - 50){ p.beat = p.every; doPulse(p, p.x, p.y, p.R); }
+    } else if (p.kind === 'orb'){
       p.ang += 0.075 * (p.dir || 1);
       const cx = p.anchor ? p.ax : P.x, cy = p.anchor ? p.ay : P.y;
       p.x = cx + Math.cos(p.ang) * p.rad; p.y = cy + Math.sin(p.ang) * p.rad;
@@ -191,6 +231,17 @@ function update(){
         if (d < 20) p.life = 0;
       }
       p.x += p.vx; p.y += p.vy;
+      // «Призма»: снаряд, пролетевший сквозь кристалл, расщепляется веером
+      if (prism && !p.child && !p.prismed && prismBudget > 0 && Math.abs(p.x - prism.x) < prism.r && Math.hypot(p.x - prism.x, p.y - prism.y) < prism.r){
+        p.prismed = true; prismBudget--;
+        const sp = Math.hypot(p.vx, p.vy), a0 = Math.atan2(p.vy, p.vx);
+        for (let k = 1; k <= prism.split; k++){
+          const a = a0 + (k % 2 ? 1 : -1) * Math.ceil(k / 2) * 0.32;
+          spawnProj({ ...p, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, dmg: p.dmg * 0.6, child: true, prismed: true, trigger: 0, split: 0,
+                      color: pick(['#ff7ad8', '#7fe8ff', '#ffe08a', '#9dff7a']), life: Math.max(p.life, 30), hit: new Set(p.hit) });
+        }
+        burst(prism.x, prism.y, 6, '#ffffff', 3);
+      }
       // снаряд разбивается о постройку, а с «Отражением» отскакивает
       const hs = solidHit(p.x, p.y, p.r * 0.4);
       if (hs){
@@ -250,12 +301,32 @@ function update(){
   }
   puddles = puddles.filter(d => d.t > 0);
 
+  // «Привязь»: обе стороны жжёт, нить режет тех, кто её пересёк
+  for (const T of ties){
+    T.t--;
+    if (T.a.dead || T.b.dead) T.t = 0;
+    else if (tick % 20 === 0){
+      hitEnemy(T.a, T.src, T.src.dmg, T.a.x, T.a.y); hitEnemy(T.b, T.src, T.src.dmg, T.b.x, T.b.y);
+      const mx = (T.a.x + T.b.x) / 2, my = (T.a.y + T.b.y) / 2, L = Math.hypot(T.b.x - T.a.x, T.b.y - T.a.y) || 1;
+      near(mx, my, L / 2 + 20, o => {
+        if (o === T.a || o === T.b || o.static) return;
+        const t = clamp(((o.x - T.a.x) * (T.b.x - T.a.x) + (o.y - T.a.y) * (T.b.y - T.a.y)) / (L * L), 0, 1);
+        if (Math.hypot(o.x - (T.a.x + (T.b.x - T.a.x) * t), o.y - (T.a.y + (T.b.y - T.a.y) * t)) < o.r + 6) hitEnemy(o, T.src, T.src.dmg, o.x, o.y);
+      });
+      if (!T.first){ T.first = true; onImpact(T.src, mx, my); }
+    }
+    if (T.t <= 0){ if (T.a.tie === T.b) T.a.tie = null; if (T.b.tie === T.a) T.b.tie = null; }
+  }
+  ties = ties.filter(T => T.t > 0);
+
   // враги
   const moonMul = moonT > 0 ? 1.35 : 1;
+  const bait = projs.find(p => p.kind === 'bait' && p.life > 0);
   for (const e of enemies){
     if (e.dead) continue;
     if (e.flash > 0) e.flash--;
     if (e.slow > 0) e.slow--;
+    if (e.sand > 0) e.sand--;
     if (e.mark > 0) e.mark--;
     if (e.iceT > 0) e.iceT--;
     if (e.acidT > 0 && --e.acidT === 0) e.acid = 0;
@@ -265,8 +336,27 @@ function update(){
       if (e.burn % 20 === 0) damage(e, e.burnDmg, '#ff7a2e', -1);
       if (Math.random() < 0.3) particles.push({ x: e.x + rnd(-e.r, e.r) * 0.6, y: e.y, vx: 0, vy: -1.2, life: 20, max: 20, color: '#ff7a2e', r: 2.5 });
     }
+    if (e.debt && --e.debt.t <= 0) payDebt(e);
     if (e.dead || e.static){
       if (e.static && Math.hypot(P.x - e.x, P.y - e.y) > 2400) e.dead = true;
+      continue;
+    }
+    // «Бильярд»: враг летит и сбивает всех на пути
+    if (e.fly > 0){
+      e.fly--; e.x += e.fvx; e.y += e.fvy; e.fvx *= 0.93; e.fvy *= 0.93;
+      if (tick % 2 === 0) particles.push({ x: e.x, y: e.y, vx: 0, vy: 0, life: 12, max: 12, color: '#ffffff', r: e.r * 0.4 });
+      near(e.x, e.y, e.r + 6, o => {
+        if (o === e || o.static || e.fsrc.hit.has(o)) return;
+        e.fsrc.hit.add(o); hitEnemy(o, e.fsrc, e.fsrc.dmg, o.x, o.y);
+        burst(o.x, o.y, 6, '#ffffff', 3); sfx.thud();
+        if (!o.boss && !o.static){ const dd = Math.hypot(o.x - e.x, o.y - e.y) || 1; o.x += (o.x - e.x) / dd * 14; o.y += (o.y - e.y) / dd * 14; }
+      });
+      if (pushOut(e, e.r * 0.8)){ e.fly = 0; burst(e.x, e.y, 8, '#ffffff', 3); sfx.thud(); }
+      continue;
+    }
+    // бомбер подбегает, шипит фитилём и взрывается — и тебе больно, и соседям
+    if (e.type === 'bomber' && e.fuse > 0){
+      if (--e.fuse === 0){ bomberBlast(e, true); e.dead = true; }
       continue;
     }
     // дикий зверь оглушён: стоит на месте, рядом с ним идёт приручение
@@ -280,6 +370,7 @@ function update(){
     }
     if (e.stunT > 0){ e.stunT--; continue; }
     const dx = P.x - e.x, dy = P.y - e.y, d = Math.hypot(dx, dy) || 1;
+    if (e.type === 'bomber' && d < 70 + e.r){ e.fuse = 45; tone(900, 0.1, { type: 'square', vol: 0.03 }); continue; }
     if (e.boss){
       bossAttack(e, dx, dy, d);
       // во время особой атаки босс ходит сам
@@ -289,8 +380,13 @@ function update(){
         continue;
       }
     }
-    const sp = e.spd * (e.slow > 0 ? 0.45 : 1) * (e.iceT > 0 ? 0.6 : 1) * (e.wet > 0 ? 0.8 : 1) * moonMul;
+    const sp = e.spd * (e.slow > 0 ? 0.45 : 1) * (e.iceT > 0 ? 0.6 : 1) * (e.wet > 0 ? 0.8 : 1) * (e.sand > 0 ? 0.55 : 1) * moonMul;
     let ux = dx / d, uy = dy / d;
+    // «Приманка» уводит обычных врагов за собой
+    if (bait && !e.wild && e.type !== 'goblin'){
+      const bx = bait.x - e.x, by = bait.y - e.y, bd = Math.hypot(bx, by) || 1;
+      if (bd < bait.lure){ ux = bx / bd; uy = by / bd; }
+    }
     if (e.type === 'shooter' && d < 260){ ux = -ux * 0.6; uy = -uy * 0.6; }
     if (e.type === 'goblin'){ ux = -ux + Math.sin(tick * 0.05 + e.wob) * 0.6; uy = -uy + Math.cos(tick * 0.05 + e.wob) * 0.6; if (--e.life <= 0 || d > 1500){ e.dead = true; banner('💨 Гоблин сбежал…', '#a99cc9'); continue; } }
     e.x += ux * sp; e.y += uy * sp;
@@ -316,7 +412,9 @@ function update(){
   enemies = enemies.filter(e => !e.dead);
 
   for (const b of ebullets){
-    b.x += b.vx; b.y += b.vy; b.life--;
+    // пули Часовщика сначала висят в воздухе, потом летят
+    if (b.wait > 0) b.wait--; else { b.x += b.vx; b.y += b.vy; }
+    b.life--;
     if (solidAt(b.x, b.y, 3)){ b.life = 0; burst(b.x, b.y, 4, '#ff3d6e', 2); continue; }
     if (Math.hypot(b.x - P.x, b.y - P.y) < P.r + 5 && P.inv <= 0){ hurt((goldT > 0 ? 15 : 10) * dmgScale()); b.life = 0; }
   }

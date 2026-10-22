@@ -145,9 +145,10 @@ function destroySolid(s){
 function damageSolidsIn(x, y, rad, amt){
   for (const s of nearSolids.slice()) if (Math.hypot(s.col.x - x, s.col.y - y) < rad + s.ext * 0.6) damageSolid(s, amt);
 }
+const RESO_LEN = 420; // длина луча резонатора в каждую сторону
 function hazards(){
   const P = player;
-  P.onIce = false;
+  P.onIce = false; P.inSand = false;
   for (const h of nearProps){
     const pd = Math.hypot(P.x - h.x, P.y - h.y) || 1;
     if (h.kind === 'lava'){
@@ -170,6 +171,35 @@ function hazards(){
       near(h.x, h.y, h.r * 2.2, (e, dx, dy) => { if (e.static || e.boss) return; const d = Math.hypot(dx, dy) || 1; e.x -= dx / d * 1.1; e.y -= dy / d * 1.1; });
       if (tick % 10 === 0) near(h.x, h.y, h.r * 0.35, e => { if (!e.static) damage(e, 6 * hpScale(), '#b46bff', -1); });
       if (pd < h.r * 2.2){ P.x += (h.x - P.x) / pd * 0.45; P.y += (h.y - P.y) / pd * 0.45; if (pd < h.r * 0.35 && P.inv <= 0) hurt(6); }
+    } else if (h.kind === 'resonator'){
+      // резонатор: 1 с показывает направление пунктиром, потом бьёт лучом насквозь в обе стороны
+      if (h.ang === undefined) h.ang = h.seed * Math.PI;
+      h.t = (h.t + 1) % 300;
+      if (h.t === 230) h.ang = rnd(0, Math.PI);
+      if (h.fire > 0) h.fire--;
+      if (h.t === 0){
+        h.fire = 14;
+        const L = RESO_LEN, cx = Math.cos(h.ang), cy = Math.sin(h.ang), onLine = (x, y, r) => {
+          const t = clamp((x - h.x) * cx + (y - h.y) * cy, -L, L);
+          return Math.hypot(x - (h.x + cx * t), y - (h.y + cy * t)) < r;
+        };
+        near(h.x, h.y, L, e => { if (!e.static && onLine(e.x, e.y, e.r + 14)) damage(e, 16 * hpScale(), '#9ff0ff', -1); });
+        if (onLine(P.x, P.y, P.r + 10) && P.inv <= 0 && P.dash <= 0) hurt(14);
+        if (pd < 800 && can('reso', 100)){ tone(1800, 0.25, { type: 'sawtooth', vol: 0.04, to: 400 }); tone(2400, 0.2, { vol: 0.03 }); }
+      }
+    } else if (h.kind === 'quicksand'){
+      // зыбучий песок: вязнешь, тебя тянет к центру, а в центре ранит
+      if (pd < h.r){
+        P.inSand = true;
+        P.x += (h.x - P.x) / pd * 0.35; P.y += (h.y - P.y) / pd * 0.35;
+        if (pd < h.r * 0.3 && P.inv <= 0 && P.dash <= 0) hurt(5);
+      }
+      near(h.x, h.y, h.r, (e, dx, dy) => {
+        if (e.static || e.boss) return;
+        e.sand = 4;
+        const d = Math.hypot(dx, dy) || 1; e.x -= dx / d * 0.5; e.y -= dy / d * 0.5;
+      });
+      if (tick % 15 === 0) near(h.x, h.y, h.r * 0.3, e => { if (!e.static) damage(e, 4 * hpScale(), '#c49a5e', -1); });
     } else if (h.kind === 'nest' && !h.used && !hasPet('dragon')){
       // высиживание: стой в гнезде 12 с, вокруг сбегается всё больше врагов
       if (pd < 60){

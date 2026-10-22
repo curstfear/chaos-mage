@@ -11,7 +11,13 @@ const PAL = {
            ground: ['#16304a', '#11263c', '#1c3a58', '#24486a'], tuft: '#cfe8ff', flower: '#ffffff', snow: '#eaf6ff' },
   swamp: { stone: '#4a5a44', stoneD: '#2e3a2a', stoneL: '#6a7e60', glow: '#9dff5a', leaf: '#2f6a2a', leafD: '#1a4218', leafL: '#4a9a3a', bark: '#3a2a1a', barkD: '#22180e',
            roof: '#2f5a2a', roofD: '#1e3c1a', wall: '#5a4228', wallD: '#3a2a18', rock: '#3e4a3a', rockD: '#262e24', rockL: '#5a6a52',
-           ground: ['#142012', '#0e180c', '#1a2a16', '#20321a'], tuft: '#3a7a2a', flower: '#d16bff' }
+           ground: ['#142012', '#0e180c', '#1a2a16', '#20321a'], tuft: '#3a7a2a', flower: '#d16bff' },
+  caves: { stone: '#3e3a6a', stoneD: '#26224a', stoneL: '#5e58a0', glow: '#9ff0ff', leaf: '#ff7ad8', leafD: '#b03a96', leafL: '#ffc0ee', bark: '#2e2a4a', barkD: '#1a1630',
+           roof: '#4a3a7a', roofD: '#2e2456', wall: '#3e3a6a', wallD: '#26224a', rock: '#34305a', rockD: '#1e1a3a', rockL: '#56508a',
+           ground: ['#110e24', '#0c0a1c', '#16122e', '#1e1a3c'], tuft: '#7fe8ff', flower: '#ff7ad8', shard: '#9ff0ff', shardD: '#3ab0d0' },
+  desert: { stone: '#c89a5a', stoneD: '#966a34', stoneL: '#ecc68a', glow: '#ffe08a', leaf: '#5a8a3a', leafD: '#3a6024', leafL: '#86b85a', bark: '#7a5a34', barkD: '#4a3420',
+            roof: '#a0542a', roofD: '#6e3418', wall: '#d8b07a', wallD: '#a8804a', rock: '#a87a4a', rockD: '#744e2a', rockL: '#d0a470',
+            ground: ['#c49a5e', '#b48a50', '#d0a86c', '#a8804a'], tuft: '#8a7040', flower: '#ff6a8a' }
 };
 function treeSprite(P, biome){
   const b = PB(28, 40);
@@ -25,6 +31,19 @@ function treeSprite(P, biome){
   } else if (biome === 'lava'){
     line(b, 14, 26, 6, 12, P.bark); line(b, 15, 24, 22, 10, P.bark); line(b, 14, 20, 14, 6, P.bark); line(b, 8, 15, 4, 13, P.bark); line(b, 20, 13, 25, 9, P.bark);
     line(b, 15, 26, 7, 12, P.barkD); for (const [x, y] of [[6, 12], [22, 10], [14, 6], [4, 13], [25, 9], [10, 18]]) pset(b, x, y, '#ff8a3d');
+  } else if (biome === 'desert'){
+    // кактус вместо дерева
+    rect(b, 11, 10, 7, 29, P.leaf); rect(b, 15, 10, 3, 29, P.leafD, P.leaf); rect(b, 12, 10, 1, 29, P.leafL, P.leaf);
+    rect(b, 4, 16, 3, 10, P.leaf); rect(b, 4, 24, 8, 3, P.leaf); rect(b, 21, 12, 3, 9, P.leaf); rect(b, 17, 19, 7, 3, P.leaf);
+    disc(b, 14.5, 10, 3.5, 2, P.leaf); disc(b, 5.5, 16, 1.6, 1.2, P.leaf); disc(b, 22.5, 12, 1.6, 1.2, P.leaf);
+    for (const [x, y] of [[11, 14], [18, 18], [11, 26], [18, 31], [4, 20], [24, 15]]) pset(b, x, y, '#f4ecd8');
+    disc(b, 14.5, 7.5, 2, 1.6, P.flower);
+  } else if (biome === 'caves'){
+    // друза кристаллов вместо дерева
+    for (const [x, top, w, c, d] of [[14, 2, 5, P.shard, P.shardD], [8, 14, 4, P.leaf, P.leafD], [20, 10, 4, P.leaf, P.leafD], [4, 24, 3, P.shard, P.shardD], [24, 22, 3, P.shard, P.shardD]]){
+      tri(b, x, top, x - w, 38, x + w, 38, c); tri(b, x, top, x, 38, x + w, 38, d, c); line(b, x - 1, top + 3, x - w + 1, 36, '#ffffff', c);
+    }
+    rect(b, 2, 36, 25, 3, P.stoneD);
   } else if (biome === 'swamp'){
     line(b, 14, 26, 5, 10, P.bark); line(b, 15, 25, 24, 12, P.bark); line(b, 14, 22, 15, 5, P.bark); line(b, 6, 11, 2, 14, P.bark);
     for (const [x, y, l] of [[5, 10, 6], [9, 16, 4], [24, 12, 7], [20, 16, 3], [15, 5, 5]]) line(b, x, y, x, y + l, P.leafL);
@@ -153,6 +172,8 @@ function groundTile(P, biome){
   for (let i = 0; i < 14; i++){ g.fillStyle = b3; g.fillRect(Math.random() * 32 | 0, Math.random() * 32 | 0, 1, 1); }
   if (biome === 'abyss'){ g.fillStyle = '#08060f'; g.fillRect(0, 0, 32, 1); g.fillRect(0, 16, 32, 1); g.fillRect(0, 0, 1, 16); g.fillRect(16, 16, 1, 16); }
   if (biome === 'lava') for (let k = 0; k < 2; k++){ let x = Math.random() * 32, y = Math.random() * 32; g.fillStyle = '#ff5a1f'; for (let s = 0; s < 5; s++){ g.fillRect(x | 0, y | 0, 1, 1); x += rnd(-1, 2); y += rnd(-1, 1.5); } }
+  if (biome === 'caves'){ for (let k = 0; k < 5; k++){ g.fillStyle = k % 2 ? '#3ab0d0' : '#b03a96'; g.fillRect(Math.random() * 32 | 0, Math.random() * 32 | 0, 1, 1); } }
+  if (biome === 'desert'){ g.fillStyle = '#a8804a'; for (let k = 0; k < 3; k++){ const y = Math.random() * 32 | 0, x = Math.random() * 32 | 0; g.fillRect(x, y, 6, 1); g.fillRect(x + 2, y + 1, 4, 1); } }
   if (biome === 'ice'){ g.fillStyle = '#2e5a80'; for (let k = 0; k < 3; k++){ const x = Math.random() * 32 | 0, y = Math.random() * 32 | 0; g.fillRect(x, y, 4, 1); } }
   return c;
 }
@@ -161,7 +182,9 @@ const BUILD_SETS = {
   abyss: [['tree', 3], ['rock', 3], ['pillar', 3], ['obelisk', 2], ['wall', 2], ['house', 1]],
   lava:  [['tree', 3], ['rock', 4], ['pillar', 2], ['totem', 2], ['wall', 2], ['house', 1]],
   ice:   [['tree', 5], ['rock', 3], ['snowman', 1], ['pillar', 1], ['wall', 2], ['house', 1]],
-  swamp: [['tree', 4], ['mushroom', 3], ['rock', 2], ['totem', 2], ['wall', 1], ['house', 1]]
+  swamp: [['tree', 4], ['mushroom', 3], ['rock', 2], ['totem', 2], ['wall', 1], ['house', 1]],
+  caves: [['tree', 5], ['rock', 3], ['obelisk', 2], ['pillar', 2], ['wall', 1], ['house', 1]],
+  desert: [['tree', 4], ['rock', 3], ['pillar', 2], ['obelisk', 1], ['wall', 2], ['house', 1], ['totem', 1]]
 };
 // коллайдер у основания: c — круг (радиус), r — прямоугольник (ширина, глубина)
 const BUILD = {
@@ -187,6 +210,8 @@ function buildSprites(){
   SPR.lich = [0, 1].map(lichSprite); SPR.slimeking = [0, 1].map(slimeKingSprite);
   SPR.golem = [0, 1].map(golemSprite); SPR.reaper = [0, 1].map(reaperSprite);
   SPR.goblin = [0, 1].map(goblinSprite);
+  SPR.bomber = [0, 1].map(bomberSprite); SPR.shield = [0, 1].map(shieldSprite); SPR.wasp = [0, 1].map(waspSprite);
+  SPR.queen = [0, 1].map(queenSprite); SPR.clock = [0, 1].map(clockSprite);
   SPR.altar = altarSprite(); SPR.gem = gemSprite(); SPR.turret = turretSprite(); SPR.ghost = ghostSprite();
   SPR.nest = nestSprite(); SPR.egg = eggSprite();
   SPR.pet = {

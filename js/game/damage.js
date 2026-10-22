@@ -11,9 +11,12 @@ function dropRune(x, y, r){
 }
 // случайная руна с чуть повышенным шансом «Цепи» (~5% вместо ~2.5%)
 const randomRune = list => Math.random() < 0.025 ? 'trigger' : pick(list);
+let shareLock = false; // чтобы урон по «Привязи» не гонялся туда-обратно бесконечно
 function damage(e, amt, color, slot, crit){
   if (e.dead) return;
   e.hp -= amt; e.flash = 5;
+  if (e.debt) e.debt.sum += amt * 0.5;
+  if (e.tie && !e.tie.dead && !shareLock){ shareLock = true; damage(e.tie, amt / 3, '#ff9ff3', slot); shareLock = false; }
   if (slot >= 0) slotDmg[slot] += amt;
   if (nums.length < 140) nums.push({ x: e.x + rnd(-8, 8), y: e.y - e.r, v: Math.round(amt) + (crit ? '!' : ''), t: crit ? 55 : 40, color, crit });
   if (crit) sfx.crit(); else sfx.hit();
@@ -43,11 +46,29 @@ function hitEnemy(e, src, dmg, x, y){
   if (src.keen && Math.random() < 0.2 * src.keen){ d *= 2; crit = true; }
   if (PACT.crit && !crit && Math.random() < PACT.crit){ d *= PACT.critMul; crit = true; }
   if (src.execute && !e.static && e.hp - d < e.maxHp * (e.boss ? 0.05 : 0.2)){ d = Math.max(d, e.hp); crit = true; }
+  // щитоносец держит щит к магу: удар с его стороны почти не проходит
+  if (e.type === 'shield' && Math.hypot(x - e.x, y - e.y) > 3 && (x - e.x) * (player.x - e.x) + (y - e.y) * (player.y - e.y) > 0){
+    d *= 0.25; crit = false;
+    if (can('blk', 60)) tone(1200, 0.05, { type: 'square', vol: 0.025, to: 800 });
+    particles.push({ x: (x + e.x) / 2, y: (y + e.y) / 2, vx: rnd(-2, 2), vy: rnd(-2, 2), life: 10, max: 10, color: '#ffffff', r: 3 });
+  }
   if (src.mark) e.mark = 240;
   e.lastSrc = src;
   damage(e, d, src.color, src.slot, crit);
   if (src.vampiric) player.hp = Math.min(player.maxHp, player.hp + Math.min(2, d * 0.03 * src.vampiric));
+  // масти «Колоды»
+  if (src.card === 'heart') player.hp = Math.min(player.maxHp, player.hp + 0.6);
+  else if (src.card === 'diamond') gainXp(0.3 * PACT.xp);
   if (e.dead) return;
+  if (src.card === 'club' && !e.boss && !e.static){ e.slow = Math.max(e.slow, 90); if (Math.random() < 0.35) e.stunT = Math.max(e.stunT || 0, 30); }
+  // «Бильярд»: враг улетает по ходу удара
+  if (src.billiard && !e.boss && !e.static){
+    let dx = e.x - x, dy = e.y - y;
+    if (Math.hypot(dx, dy) < 2){ dx = e.x - player.x; dy = e.y - player.y; }
+    const dd = Math.hypot(dx, dy) || 1;
+    e.fly = 22; e.fvx = dx / dd * 11; e.fvy = dy / dd * 11;
+    e.fsrc = { ...src, billiard: false, card: null, trigger: 0, split: 0, gravity: 0, triggered: true, dmg: src.dmg * 0.7, hit: new Set([e]) };
+  }
   if (src.stun && !e.static && !e.boss && Math.random() < 0.25 * src.stun) e.stunT = Math.max(e.stunT || 0, 36);
   if (el === 'water'){
     e.wet = 240;
@@ -121,9 +142,39 @@ function explode(src, x, y, rad){
   shake = Math.min(10, shake + rad / 45);
   sfx.boom(rad);
 }
+// «Рассрочка»: накопленный долг выплачивается одним большим ударом
+function payDebt(e){
+  const D = e.debt; e.debt = null;
+  if (D.sum < 1) return;
+  damage(e, D.sum, '#ffd700', D.slot, true);
+  burst(e.x, e.y, 14, '#ffd700', 4); ring(e.x, e.y, 40, '#ffd700');
+  if (can('debt', 80)) [1319, 1760].forEach((f, k) => tone(f, 0.15, { vol: 0.04, delay: k * 0.05 }));
+}
+// бомбер: взрыв ранит всех врагов рядом, а мага — только если взорвался сам, а не от твоего удара
+function bomberBlast(e, hurtsPlayer){
+  if (e.blown) return;
+  e.blown = true;
+  const R = 90;
+  near(e.x, e.y, R, o => { if (o !== e && !o.static) damage(o, o.boss ? o.maxHp * 0.03 : Math.max(20, o.maxHp * 0.35), '#ff8a3d', -1); });
+  if (hurtsPlayer && Math.hypot(player.x - e.x, player.y - e.y) < R && player.inv <= 0) hurt(22 * dmgScale());
+  ring(e.x, e.y, R, '#ff8a3d'); burst(e.x, e.y, 30, '#ff8a3d', 7); burst(e.x, e.y, 12, '#ffe08a', 5);
+  shake = Math.max(shake, 5); sfx.boom(R);
+}
 function kill(e){
   e.dead = true;
   const src = e.lastSrc;
+  if (e.type === 'bomber') bomberBlast(e, false);
+  // долг умершего не пропадает: взрывается по соседям
+  if (e.debt && e.debt.sum > 1){
+    const D = e.debt; e.debt = null;
+    near(e.x, e.y, 110, o => { if (!o.static) damage(o, D.sum * 0.6, '#ffd700', D.slot, true); });
+    ring(e.x, e.y, 110, '#ffd700'); burst(e.x, e.y, 24, '#ffd700', 6);
+  }
+  // каждое убийство рядом растит семена «Урожая»
+  if (!e.static) for (const p of projs) if (p.kind === 'seed' && p.stage < 12 && Math.hypot(p.x - e.x, p.y - e.y) < 170){
+    p.stage++; p.grow = 12;
+    particles.push({ x: e.x, y: e.y, vx: (p.x - e.x) / 12, vy: (p.y - e.y) / 12, life: 12, max: 12, color: '#9dff7a', r: 3 });
+  }
   if (!e.static){
     kills++; combo++; comboTimer = 110;
     if (combo > bestCombo) bestCombo = combo;

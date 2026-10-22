@@ -60,6 +60,16 @@ const sfx = {
       case 'vortex': tone(400 * p, 0.6, { type: 'sawtooth', vol: 0.03, to: 60 * p }); break;
       case 'geyser': noise(0.35, { type: 'bandpass', f: 600, to: 2400, vol: 0.08, q: 1 }); break;
       case 'snake': tone(700 * p, 0.18, { type: 'triangle', vol: 0.04, to: 900 * p }); tone(500 * p, 0.12, { vol: 0.02, delay: 0.06 }); break;
+      case 'deck': noise(0.06, { type: 'highpass', f: 3000, vol: 0.06 }); tone(1400 * p, 0.04, { type: 'square', vol: 0.015 }); break;
+      case 'billiard': tone(1900 * p, 0.05, { type: 'triangle', vol: 0.06 }); tone(950 * p, 0.08, { type: 'triangle', vol: 0.03, delay: 0.02 }); break;
+      case 'trail': noise(0.18, { type: 'lowpass', f: 500, to: 200, vol: 0.03 }); break;
+      case 'debt': [1568, 2093].forEach((f, k) => tone(f * p, 0.08, { type: 'square', vol: 0.02, delay: k * 0.04 })); break;
+      case 'tether': tone(330 * p, 0.3, { type: 'sawtooth', vol: 0.03, to: 660 * p }); break;
+      case 'seed': tone(400 * p, 0.15, { type: 'triangle', vol: 0.04, to: 700 * p }); break;
+      case 'prism': [1047, 1319, 1568, 2093].forEach((f, k) => tone(f * p, 0.4, { vol: 0.03, delay: k * 0.05 })); break;
+      case 'bait': [784, 988, 1175].forEach((f, k) => tone(f * p, 0.18, { type: 'square', vol: 0.025, delay: k * 0.07 })); break;
+      case 'sigil': tone(220 * p, 0.8, { type: 'triangle', vol: 0.06, att: 0.05 }); tone(330 * p, 0.8, { vol: 0.04, att: 0.1, delay: 0.1 }); break;
+      case 'shadow': tone(180 * p, 0.6, { type: 'sawtooth', vol: 0.04, to: 90 * p }); break;
     }
   },
   turretShot(){ if (can('ts', 60)) tone(1100, 0.05, { type: 'square', vol: 0.02, to: 700 }); },
@@ -97,7 +107,9 @@ const MUSIC = {
   abyss: [110, [220, 261.6, 329.6, 392, 440, 523.3]],
   lava:  [73.4, [146.8, 155.6, 196, 220, 233.1, 293.7]],
   ice:   [130.8, [261.6, 329.6, 370, 392, 493.9, 523.3]],
-  swamp: [98, [196, 233.1, 261.6, 293.7, 349.2, 392]]
+  swamp: [98, [196, 233.1, 261.6, 293.7, 349.2, 392]],
+  caves: [116.5, [233.1, 277.2, 311.1, 349.2, 415.3, 466.2]],
+  desert: [82.4, [164.8, 174.6, 207.7, 220, 246.9, 261.6]]
 };
 let musicNodes = [], arpTimer = null, wNode = null;
 function musicStart(){

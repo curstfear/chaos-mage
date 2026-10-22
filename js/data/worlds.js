@@ -3,7 +3,9 @@ const BIOMES = {
   abyss: { name: 'Неоновая бездна',  icon: '🌌', bg: '#0a0816', hazard: 'well',   crystal: '#b46bff', amb: '#b9a4ff', desc: 'Гравитационные колодцы затягивают всех к чёрной дыре.' },
   lava:  { name: 'Пылающие пустоши', icon: '🌋', bg: '#140806', hazard: 'lava',   crystal: '#ff9a3d', amb: '#ff8a3d', desc: 'Лавовые озёра жгут и врагов, и тебя.' },
   ice:   { name: 'Ледяная пустошь',  icon: '🧊', bg: '#0a1a2a', hazard: 'ice',    crystal: '#8fe3ff', amb: '#ffffff', desc: 'На льду скользко, а враги на нём вязнут.' },
-  swamp: { name: 'Ядовитые топи',    icon: '🍄', bg: '#0a130a', hazard: 'geyser', crystal: '#7dff5a', amb: '#9dff7a', desc: 'Ядовитые гейзеры извергаются каждые несколько секунд.' }
+  swamp: { name: 'Ядовитые топи',    icon: '🍄', bg: '#0a130a', hazard: 'geyser', crystal: '#7dff5a', amb: '#9dff7a', desc: 'Ядовитые гейзеры извергаются каждые несколько секунд.' },
+  caves: { name: 'Кристальные пещеры', icon: '💎', bg: '#0c0a1e', hazard: 'resonator', crystal: '#ff7ad8', amb: '#9ff0ff', desc: 'Кристаллы-резонаторы то и дело бьют лучом насквозь — и по врагам, и по тебе.' },
+  desert: { name: 'Зыбучие дюны',    icon: '🏜️', bg: '#2a1e10', hazard: 'quicksand', crystal: '#ffd27a', amb: '#e8c88a', desc: 'Зыбучие пески вязнут под ногами и тянут на дно. Ветер несёт песок.' }
 };
 const PACTS = {
   glass:     { icon: '🔮', name: 'Стеклянная пушка',  desc: 'Весь урон ×2, но здоровье всего 50.' },
