@@ -321,7 +321,7 @@ for (const prof of PROFILES){
     await press('#resumeBtn');
   });
   await step('смерть, награда и новый забег', async () => {
-    await g('META.shards = 120; tick = Math.max(tick, 600); player.hp = -100'); // забег должен длиться хоть немного, иначе награда 0
+    await g('META.shards = 120; tick = Math.max(tick, 3600); player.hp = -100'); // забег должен длиться хоть немного, иначе награда 0
     await sleep(300);
     if (await g('state') !== 'revive') throw new Error('нет возрождения за осколки, state = ' + await g('state'));
     await shot('8-revive');

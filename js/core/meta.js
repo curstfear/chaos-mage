@@ -41,10 +41,10 @@ function applyMeta(P){
 function runReward(){
   const sec = tick / 60;
   const parts = [
-    ['⏱ за время', sec / 7],
-    ['💀 за убийства', kills / 8],
-    ['⭐ за уровень', (level - 1) * 4],
-    ['👑 за боссов', bossCount * 25]
+    ['⏱ за время', sec / 30],
+    ['💀 за убийства', kills / 40],
+    ['⭐ за уровень', (level - 1) * 1],
+    ['👑 за боссов', bossCount * 6]
   ].map(([k, v]) => [k, Math.floor(v)]);
   const base = parts.reduce((s, [, v]) => s + v, 0);
   return { parts, total: Math.round(base * PACT.shards), bonus: PACT.shards > 1 ? Math.round(base * (PACT.shards - 1)) : 0 };
@@ -52,7 +52,7 @@ function runReward(){
 // очки забега (копятся за убийства в game/damage.js) — по ним строится таблица рекордов
 const runScore = () => score;
 // монеты: немного за каждый забег, чуть больше за долгий и с боссами
-const runCoins = () => 2 + Math.floor(tick / 60 / 30) + Math.floor(kills / 100) + bossCount * 4 + Math.floor(level / 5);
+const runCoins = () => 1 + Math.floor(tick / 60 / 150) + Math.floor(kills / 400) + bossCount + Math.floor(level / 10);
 function finishRun(){
   const r = runReward(), sec = Math.floor(tick / 60);
   r.score = runScore(); r.coins = runCoins(); r.record = r.score > META.best.score;

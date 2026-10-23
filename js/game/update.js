@@ -589,7 +589,7 @@ function update(){
   if (shake > 0) shake *= 0.85;
   if (shake < 0.3) shake = 0;
 
-  if (P.hp <= 0){ if (hasFeather) revive(); else if (lives > 0) secondWind(); else if (META.shards >= reviveCost()){ offerRevive(); return; } else { die(); return; } }
+  if (P.hp <= 0){ if (hasFeather) revive(); else if (lives > 0) secondWind(); else if (shardRevives < MAX_SHARD_REVIVES && META.shards >= reviveCost()){ offerRevive(); return; } else { die(); return; } }
   if (pendingLevels > 0 && state === 'play') openPick('level');
 }
 function hurt(d){
@@ -626,6 +626,7 @@ function secondWind(){
   rise(`🕊️ ВТОРОЕ ДЫХАНИЕ!${lives ? ` (ещё ${lives})` : ''}`, '#ffffff');
 }
 // возрождение за осколки — только когда запасных жизней не осталось; каждое следующее вдвое дороже
+const MAX_SHARD_REVIVES = 2; // потолок возрождений за осколки за один забег
 const reviveCost = () => 50 * 2 ** shardRevives;
 function offerRevive(){
   setState('revive');
